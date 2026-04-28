@@ -1,0 +1,18 @@
+spring:
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/helperhaven
+
+logging:
+  level:
+    com.helperhaven: DEBUG
+    org.hibernate.SQL: DEBUG
+
+helperhaven:
+  storage:
+    provider: s3
+    endpoint: http://${MINIO_HOST:localhost}:9000
+    path-style-access: true

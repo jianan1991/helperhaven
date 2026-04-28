@@ -1,0 +1,32 @@
+# env
+.env
+.env.*
+!.env.example
+
+# node
+node_modules/
+dist/
+.vite/
+
+# java
+target/
+*.class
+*.jar
+*.war
+hs_err_pid*.log
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# logs
+logs/
+*.log
+
+# docker
+**/volumes/

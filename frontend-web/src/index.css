@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Direction A — base layer */
+html, body, #root { height: 100%; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #1c2927;
+  background: #faf7f2;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Display serif used for headings */
+.serif { font-family: 'Fraunces', Georgia, serif; font-variation-settings: 'opsz' 40; }
+
+/* Hand-written warmth — Caveat. Used sparingly for kickers and moments. */
+.hand { font-family: 'Caveat', 'Fraunces', cursive; font-weight: 600; }
+
+/* Subtle paper grain — overlays cream backgrounds for warmth */
+.grain {
+  background-image: radial-gradient(rgba(26,104,94,0.05) 1px, transparent 1px);
+  background-size: 3px 3px;
+}
+
+/* Hero glow — peach top-left, sage bottom-right, on cream */
+.warm-glow {
+  background:
+    radial-gradient(ellipse at top left, #fbe7d4 0%, transparent 55%),
+    radial-gradient(ellipse at bottom right, #d6ece5 0%, transparent 60%),
+    #faf7f2;
+}
+
+/* Wavy clay underline — for emphasised words in headings */
+.wavy::after {
+  content: '';
+  display: block;
+  height: 10px;
+  margin-top: 4px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 10'><path d='M 2 6 Q 15 1, 30 6 T 60 6 T 90 6 T 118 6' fill='none' stroke='%23c75d3e' stroke-width='2.5' stroke-linecap='round'/></svg>");
+  background-repeat: repeat-x;
+  background-size: 120px 10px;
+}
+
+/* Hand-drawn oval encircling a phrase */
+.circle-doodle { position: relative; display: inline-block; }
+.circle-doodle::before {
+  content: '';
+  position: absolute;
+  inset: -8px -14px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 70'><path d='M 30 10 Q 10 10, 10 35 Q 10 60, 100 60 Q 190 60, 190 35 Q 190 10, 100 10 Q 50 10, 30 10 Z' fill='none' stroke='%23c75d3e' stroke-width='2.5' stroke-linecap='round'/></svg>");
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  pointer-events: none;
+}
+
+/* Skill-budget range slider in sage */
+input[type=range] { -webkit-appearance: none; background: transparent; width: 100%; }
+input[type=range]::-webkit-slider-runnable-track { height: 6px; background: #d6ece5; border-radius: 999px; }
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 22px; width: 22px; border-radius: 999px;
+  background: #2f9c8e; border: 3px solid white;
+  box-shadow: 0 2px 6px rgba(26,104,94,0.35);
+  margin-top: -8px;
+}
+input[type=range]::-moz-range-track { height: 6px; background: #d6ece5; border-radius: 999px; }
+input[type=range]::-moz-range-thumb {
+  height: 22px; width: 22px; border-radius: 999px;
+  background: #2f9c8e; border: 3px solid white;
+}
+
+/* Privacy-gated card blur */
+.blur-gate { filter: blur(14px); transform: scale(1.1); }
+
+/* Reduce-motion respect */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

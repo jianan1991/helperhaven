@@ -1,0 +1,90 @@
+spring:
+  application:
+    name: helperhaven-backend
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/helperhaven}
+    username: ${DB_USER:helperhaven}
+    password: ${DB_PASSWORD:helperhaven}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        format_sql: false
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:1025}
+    username: ${SMTP_USER:}
+    password: ${SMTP_PASSWORD:}
+
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
+
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-stacktrace: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+helperhaven:
+  auth:
+    jwt:
+      secret: ${JWT_SECRET:change-me-dev-only-do-not-use-in-prod-change-me-dev-only}
+      access-token-ttl: PT15M
+      refresh-token-ttl: P30D
+  storage:
+    provider: ${STORAGE_PROVIDER:s3}
+    bucket: ${STORAGE_BUCKET:helperhaven-dev}
+    region: ${STORAGE_REGION:ap-southeast-1}
+    endpoint: ${STORAGE_ENDPOINT:http://localhost:9000}
+    access-key: ${STORAGE_ACCESS_KEY:minioadmin}
+    secret-key: ${STORAGE_SECRET_KEY:minioadmin}
+    path-style-access: ${STORAGE_PATH_STYLE:true}
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY:sk_test_stub}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_stub}
+  matching:
+    unlock-expiry-hours: 72
+    chat-refund-hours: 48         # auto-refund if helper hasn't replied within this
+    chat-thread-expiry-days: 30   # inactive threads close automatically
+  sybil:
+    max-signups-per-ip-24h: 3
+    require-kyc-before-visibility: true

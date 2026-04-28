@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HelperHaven — Design directions</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .serif-a { font-family: 'Fraunces', serif; }
+    .serif-b { font-family: 'Playfair Display', serif; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <div class="max-w-5xl mx-auto px-6 py-16">
+    <header class="mb-16">
+      <div class="text-xs uppercase tracking-widest text-slate-500 mb-3">Design sprint · v0.1</div>
+      <h1 class="text-5xl font-bold tracking-tight">HelperHaven — two directions</h1>
+      <p class="mt-4 text-lg text-slate-600 max-w-2xl">Same product, same information architecture, two different emotional registers. Open each, scroll through the three screens, pick what feels right. It&rsquo;s fine to say &ldquo;A&rsquo;s colour, B&rsquo;s typography&rdquo; — that&rsquo;s the whole point of this exercise.</p>
+    </header>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <a href="direction-a.html" class="group block rounded-3xl overflow-hidden border border-slate-200 bg-white hover:shadow-xl transition">
+        <div class="h-56 relative" style="background: linear-gradient(135deg, #faf7f2 0%, #e7efe9 60%, #2f9c8e 140%);">
+          <div class="absolute inset-0 flex items-end p-6">
+            <div class="flex gap-2">
+              <span class="w-8 h-8 rounded-full" style="background:#2f9c8e"></span>
+              <span class="w-8 h-8 rounded-full" style="background:#1a685e"></span>
+              <span class="w-8 h-8 rounded-full" style="background:#c75d3e"></span>
+              <span class="w-8 h-8 rounded-full border border-slate-300" style="background:#faf7f2"></span>
+            </div>
+          </div>
+          <div class="absolute top-4 right-4 bg-white/80 backdrop-blur text-xs px-3 py-1 rounded-full font-medium">Direction A</div>
+        </div>
+        <div class="p-6">
+          <h2 class="serif-a text-2xl font-bold">Warm &amp; Community</h2>
+          <p class="mt-2 text-slate-600 text-sm leading-relaxed">Sage + cream + terracotta. Fraunces serif headlines. Generous radii, soft shadows, photography-forward. Feels like Airbnb meets a good neighbourhood service.</p>
+          <div class="mt-4 text-sm text-brand-600 font-medium group-hover:underline" style="color:#1a685e">View direction →</div>
+        </div>
+      </a>
+
+      <a href="direction-b.html" class="group block rounded-3xl overflow-hidden border border-slate-200 bg-white hover:shadow-xl transition">
+        <div class="h-56 relative" style="background: linear-gradient(135deg, #f8f6f1 0%, #e8e3d6 50%, #0f2942 140%);">
+          <div class="absolute inset-0 flex items-end p-6">
+            <div class="flex gap-2">
+              <span class="w-8 h-8 rounded-full" style="background:#0f2942"></span>
+              <span class="w-8 h-8 rounded-full" style="background:#1e3a5f"></span>
+              <span class="w-8 h-8 rounded-full" style="background:#c19a54"></span>
+              <span class="w-8 h-8 rounded-full border border-slate-300" style="background:#f8f6f1"></span>
+            </div>
+          </div>
+          <div class="absolute top-4 right-4 bg-white/80 backdrop-blur text-xs px-3 py-1 rounded-full font-medium">Direction B</div>
+        </div>
+        <div class="p-6">
+          <h2 class="serif-b text-2xl font-bold">Professional Concierge</h2>
+          <p class="mt-2 text-slate-600 text-sm leading-relaxed">Navy + ivory + muted gold. Playfair Display headlines. Restrained radii, thin borders, iconography-forward. Feels like a private-bank retail app or a premium recruiter.</p>
+          <div class="mt-4 text-sm font-medium group-hover:underline" style="color:#0f2942">View direction →</div>
+        </div>
+      </a>
+    </div>
+
+    <section class="mt-20 rounded-3xl bg-white border border-slate-200 p-8">
+      <h3 class="text-xl font-semibold">What to react to</h3>
+      <ul class="mt-4 space-y-2 text-slate-700 text-sm list-disc list-inside">
+        <li><strong>Colour</strong> — warm sage vs. deep navy. Which signals trust <em>to Singapore employers</em>?</li>
+        <li><strong>Typography</strong> — Fraunces (friendly serif) vs. Playfair (elegant serif) for headlines.</li>
+        <li><strong>Density</strong> — A is airy, B is packed. Helpers probably prefer A. Employers may prefer B.</li>
+        <li><strong>Privacy gate</strong> — compare how the blurred-helper card is treated. This is our visual signature.</li>
+        <li><strong>Skill builder</strong> — both use 0&ndash;100 sliders with mastery labels, but the pacing differs.</li>
+      </ul>
+      <p class="mt-4 text-slate-500 text-sm">Mockups are static HTML + Tailwind. Mix-and-match freely. If you want a hybrid of both, tell me which bits to keep.</p>
+    </section>
+
+    <a href="logo.html" class="mt-8 group block rounded-2xl border border-slate-200 bg-white hover:shadow-lg transition p-6 flex items-center gap-5">
+      <div class="w-16 h-16 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
+        <svg viewBox="0 0 120 120" class="w-12 h-12" fill="none">
+          <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#1a685e" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+          <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+          <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+        </svg>
+      </div>
+      <div class="flex-1">
+        <div class="font-semibold text-slate-900">Logo explorations →</div>
+        <div class="text-sm text-slate-600 mt-1">Three mark concepts in Direction A&rsquo;s sage + clay + cream palette, plus lockups, reverse variants, and favicon scale tests.</div>
+      </div>
+      <div class="text-slate-400 group-hover:text-slate-700 transition">→</div>
+    </a>
+
+    <footer class="mt-12 text-xs text-slate-500 text-center">
+      HelperHaven · design preview · v0.1
+    </footer>
+  </div>
+</body>
+</html>

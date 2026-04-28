@@ -1,0 +1,886 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HelperHaven — Logo explorations</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cream: { 50: '#fdfbf6', 100: '#faf7f2', 200: '#f2ece0' },
+            sage:  { 50: '#eef7f5', 100: '#d6ece5', 400: '#5ab6a8', 500: '#2f9c8e', 600: '#218276', 700: '#1a685e', 900: '#0f3c36' },
+            clay:  { 500: '#c75d3e', 600: '#a84a2f' },
+            ink:   { 900: '#1c2927', 700: '#3a4744', 500: '#6b7570' },
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            serif: ['Fraunces', 'serif'],
+          },
+          boxShadow: {
+            soft: '0 2px 8px -2px rgba(26, 104, 94, 0.08), 0 8px 24px -6px rgba(26, 104, 94, 0.08)',
+            lift: '0 10px 30px -12px rgba(26, 104, 94, 0.25)',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; color: #1c2927; background: #faf7f2; }
+    .serif { font-family: 'Fraunces', serif; font-variation-settings: 'opsz' 40; }
+    .serif-display { font-family: 'Fraunces', serif; font-variation-settings: 'opsz' 144; letter-spacing: -0.01em; }
+    .grain { background-image: radial-gradient(rgba(26,104,94,0.05) 1px, transparent 1px); background-size: 3px 3px; }
+    .checker { background-image: linear-gradient(45deg, #f2ece0 25%, transparent 25%), linear-gradient(-45deg, #f2ece0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f2ece0 75%), linear-gradient(-45deg, transparent 75%, #f2ece0 75%); background-size: 16px 16px; background-position: 0 0, 0 8px, 8px -8px, -8px 0px; background-color: #faf7f2; }
+  </style>
+</head>
+<body>
+
+<!-- Top nav -->
+<div class="sticky top-0 z-40 bg-cream-100/80 backdrop-blur border-b border-cream-200">
+  <div class="max-w-6xl mx-auto px-6 h-12 flex items-center justify-between text-sm">
+    <a href="index.html" class="text-ink-500 hover:text-sage-700">← back to gallery</a>
+    <span class="text-ink-500">HelperHaven · Logo v0.1</span>
+  </div>
+</div>
+
+<!-- Hero -->
+<section class="py-20 border-b border-cream-200 grain">
+  <div class="max-w-6xl mx-auto px-6 text-center">
+    <div class="text-xs uppercase tracking-widest text-sage-700">Identity · Direction A palette</div>
+    <h1 class="serif-display text-6xl font-bold mt-4">A home. A helper. A haven.</h1>
+    <p class="mt-5 text-ink-500 max-w-2xl mx-auto text-lg">Three marks built from the same palette you already approved &mdash; sage <span class="inline-block w-3 h-3 rounded-full align-middle" style="background:#1a685e"></span>, clay <span class="inline-block w-3 h-3 rounded-full align-middle" style="background:#c75d3e"></span>, cream <span class="inline-block w-3 h-3 rounded-full align-middle border border-cream-200" style="background:#faf7f2"></span>. Pick one or tell me what to push further.</p>
+  </div>
+</section>
+
+<!-- ========== PRIMARY RECOMMENDATION ========== -->
+<section class="py-24 bg-cream-50 border-b border-cream-200">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-xs uppercase tracking-widest text-clay-500 mb-2 text-center">★ Chosen mark</div>
+    <h2 class="serif text-3xl font-bold text-center">The Cottage</h2>
+    <p class="mt-3 text-ink-500 text-center max-w-xl mx-auto">A little house with a person inside. Warm, unambiguous, and right on the brand promise &mdash; we&rsquo;re helping someone find a home in Singapore, not just an account on a platform.</p>
+
+    <div class="mt-12 grid md:grid-cols-2 gap-8 items-center">
+      <!-- Big hero mark -->
+      <div class="rounded-3xl bg-white border border-cream-200 shadow-lift p-12 flex items-center justify-center min-h-[420px]">
+        <svg viewBox="0 0 120 120" class="w-72 h-72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- House silhouette -->
+          <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z"
+                stroke="#1a685e" stroke-width="9"
+                stroke-linejoin="round" stroke-linecap="round"
+                fill="none"/>
+          <!-- Figure head -->
+          <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+          <!-- Figure body -->
+          <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z"
+                fill="#c75d3e"/>
+        </svg>
+      </div>
+
+      <!-- Why this works -->
+      <div class="space-y-5">
+        <div class="flex gap-4">
+          <div class="w-10 h-10 rounded-full bg-sage-100 flex items-center justify-center text-sage-700 shrink-0">1</div>
+          <div>
+            <div class="serif font-bold text-lg">A house is a <em>home</em></div>
+            <div class="text-sm text-ink-500 mt-1">The pitched roof reads instantly as &ldquo;home&rdquo; in every culture. We&rsquo;re not an office, a spreadsheet, or an agency &mdash; we&rsquo;re the place where a helper finds her next home.</div>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <div class="w-10 h-10 rounded-full bg-clay-500 text-white flex items-center justify-center shrink-0">2</div>
+          <div>
+            <div class="serif font-bold text-lg">Someone&rsquo;s already inside</div>
+            <div class="text-sm text-ink-500 mt-1">The clay figure isn&rsquo;t approaching the door &mdash; she&rsquo;s already in. Subtle but important: you&rsquo;re not screening candidates, you&rsquo;re welcoming someone.</div>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <div class="w-10 h-10 rounded-full bg-cream-200 text-sage-900 flex items-center justify-center shrink-0">3</div>
+          <div>
+            <div class="serif font-bold text-lg">Instantly understood</div>
+            <div class="text-sm text-ink-500 mt-1">House + person. No decoding needed. An elderly employer, a first-time family, a helper at home in Indonesia &mdash; they all read it the same way.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CONCEPT EXPLORATION ========== -->
+<section class="py-24 bg-white border-b border-cream-200">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-xs uppercase tracking-widest text-sage-700 text-center">Concept explorations</div>
+    <h2 class="serif text-3xl font-bold text-center mt-2">Three directions</h2>
+    <p class="mt-3 text-ink-500 text-center max-w-xl mx-auto">Same palette, three different stories. All live against the same Direction A background so you can compare like-for-like.</p>
+
+    <div class="mt-14 grid md:grid-cols-3 gap-6">
+
+      <!-- Concept 1 — Arch (alternative) -->
+      <div class="rounded-3xl border border-cream-200 bg-cream-50 p-8">
+        <div class="flex items-center justify-between mb-6">
+          <span class="text-xs uppercase tracking-widest text-sage-700 font-semibold">Concept 1</span>
+          <span class="px-2 py-0.5 rounded-full bg-cream-200 text-ink-700 text-[10px] uppercase tracking-widest font-semibold">Minimal</span>
+        </div>
+        <div class="h-40 flex items-center justify-center">
+          <svg viewBox="0 0 120 120" class="w-32 h-32" fill="none">
+            <path d="M 18 102 C 18 46, 40 18, 60 18 C 80 18, 102 46, 102 102"
+                  stroke="#1a685e" stroke-width="11" stroke-linecap="round" fill="none"/>
+            <circle cx="60" cy="60" r="9" fill="#c75d3e"/>
+            <path d="M 42 96 L 42 82 C 42 73, 50 71, 60 71 C 70 71, 78 73, 78 82 L 78 96 Z" fill="#c75d3e"/>
+          </svg>
+        </div>
+        <div class="mt-6">
+          <div class="serif text-xl font-bold">Haven</div>
+          <div class="text-xs uppercase tracking-widest text-clay-500 mt-1">Shelter · figure</div>
+          <p class="mt-3 text-sm text-ink-500">Open arch, centred figure. Reads instantly as &ldquo;a safe place for someone.&rdquo; The most scalable of the three.</p>
+          <div class="mt-4 pt-4 border-t border-cream-200 flex gap-4 text-xs text-ink-500">
+            <span>✓ Minimal</span>
+            <span>✓ Favicon-safe</span>
+            <span>✓ Timeless</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Concept 2 — Cottage (chosen) -->
+      <div class="rounded-3xl border-2 border-sage-700 bg-cream-50 p-8 shadow-lift">
+        <div class="flex items-center justify-between mb-6">
+          <span class="text-xs uppercase tracking-widest text-sage-700 font-semibold">Concept 2</span>
+          <span class="px-2 py-0.5 rounded-full bg-sage-700 text-cream-100 text-[10px] uppercase tracking-widest font-semibold">★ Chosen</span>
+        </div>
+        <div class="h-40 flex items-center justify-center">
+          <svg viewBox="0 0 120 120" class="w-32 h-32" fill="none">
+            <!-- House silhouette -->
+            <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z"
+                  stroke="#1a685e" stroke-width="9"
+                  stroke-linejoin="round" stroke-linecap="round"
+                  fill="#faf7f2"/>
+            <!-- Figure inside -->
+            <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+            <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+          </svg>
+        </div>
+        <div class="mt-6">
+          <div class="serif text-xl font-bold">Cottage</div>
+          <div class="text-xs uppercase tracking-widest text-clay-500 mt-1">Home · figure</div>
+          <p class="mt-3 text-sm text-ink-500">Full house silhouette with a person already inside. Warm, unmistakable, and it matches the &ldquo;homely, not agency&rdquo; brand voice the rest of the product now leads with.</p>
+          <div class="mt-4 pt-4 border-t border-cream-200 flex gap-4 text-xs text-ink-500">
+            <span>✓ Warm</span>
+            <span>✓ Universally read</span>
+            <span>✓ On-brand</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Concept 3 — Twin H -->
+      <div class="rounded-3xl border border-cream-200 bg-cream-50 p-8">
+        <div class="flex items-center justify-between mb-6">
+          <span class="text-xs uppercase tracking-widest text-sage-700 font-semibold">Concept 3</span>
+          <span class="px-2 py-0.5 rounded-full bg-cream-200 text-ink-700 text-[10px] uppercase tracking-widest font-semibold">Clever</span>
+        </div>
+        <div class="h-40 flex items-center justify-center">
+          <svg viewBox="0 0 120 120" class="w-32 h-32" fill="none">
+            <!-- Left house -->
+            <path d="M 22 100 L 22 54 L 37 38 L 52 54 L 52 100"
+                  stroke="#1a685e" stroke-width="8"
+                  stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+            <!-- Right house -->
+            <path d="M 68 100 L 68 54 L 83 38 L 98 54 L 98 100"
+                  stroke="#1a685e" stroke-width="8"
+                  stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+            <!-- Clay bridge -->
+            <path d="M 52 72 L 68 72"
+                  stroke="#c75d3e" stroke-width="8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="mt-6">
+          <div class="serif text-xl font-bold">Twin House</div>
+          <div class="text-xs uppercase tracking-widest text-clay-500 mt-1">Two homes · one bridge</div>
+          <p class="mt-3 text-sm text-ink-500">Two small houses forming an <em>H</em>, connected by a clay bar. Tells the two-sided-marketplace story. Needs explanation.</p>
+          <div class="mt-4 pt-4 border-t border-cream-200 flex gap-4 text-xs text-ink-500">
+            <span>✓ Story</span>
+            <span>✓ Monogram</span>
+            <span>△ Busier</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========== MORE OPTIONS (Round 2) ========== -->
+<section class="py-24 bg-cream-100 border-b border-cream-200">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-xs uppercase tracking-widest text-clay-500 text-center">Round 2 · More options</div>
+    <h2 class="serif text-3xl font-bold text-center mt-2">Four more directions</h2>
+    <p class="mt-3 text-ink-500 text-center max-w-2xl mx-auto">Different metaphors, same palette. Each tells a different story about what HelperHaven <em>is</em> &mdash; care, conversation, meeting place, or trust.</p>
+
+    <div class="mt-14 grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+      <!-- Concept 4 — Nest (cradle) -->
+      <div class="rounded-3xl border border-cream-200 bg-white p-7 shadow-soft">
+        <div class="flex items-center justify-between mb-5">
+          <span class="text-xs uppercase tracking-widest text-sage-700 font-semibold">Concept 4</span>
+          <span class="px-2 py-0.5 rounded-full bg-sage-100 text-sage-700 text-[10px] uppercase tracking-widest font-semibold">Warm</span>
+        </div>
+        <div class="h-36 flex items-center justify-center bg-cream-50 rounded-2xl">
+          <svg viewBox="0 0 120 120" class="w-28 h-28" fill="none">
+            <!-- Bowl/cradle -->
+            <path d="M 16 55 Q 60 118, 104 55"
+                  stroke="#1a685e" stroke-width="11"
+                  stroke-linecap="round" fill="none"/>
+            <!-- Inner warmth line -->
+            <path d="M 32 62 Q 60 96, 88 62"
+                  stroke="#1a685e" stroke-width="5"
+                  stroke-linecap="round" fill="none" opacity="0.35"/>
+            <!-- Figure cradled -->
+            <circle cx="60" cy="48" r="10" fill="#c75d3e"/>
+          </svg>
+        </div>
+        <div class="mt-5">
+          <div class="serif text-xl font-bold">Nest</div>
+          <div class="text-xs uppercase tracking-widest text-clay-500 mt-1">Cradle · figure</div>
+          <p class="mt-3 text-sm text-ink-500">A pair of cupped hands (or a bowl) holding someone safely. Zero architecture &mdash; pure care.</p>
+          <div class="mt-4 pt-4 border-t border-cream-200 flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-500">
+            <span>✓ Emotional</span>
+            <span>✓ Minimal</span>
+            <span>△ Less &ldquo;home&rdquo;</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Concept 5 — Dialogue (chat bubble + roof) -->
+      <div class="rounded-3xl border border-cream-200 bg-white p-7 shadow-soft">
+        <div class="flex items-center justify-between mb-5">
+          <span class="text-xs uppercase tracking-widest text-sage-700 font-semibold">Concept 5</span>
+          <span class="px-2 py-0.5 rounded-full bg-clay-500 text-cream-100 text-[10px] uppercase tracking-widest font-semibold">On-product</span>
+        </div>
+        <div class="h-36 flex items-center justify-center bg-cream-50 rounded-2xl">
+          <svg viewBox="0 0 120 120" class="w-28 h-28" fill="none">
+            <!-- Rounded chat-bubble body -->
+            <path d="M 30 48
+                     L 30 85
+                     Q 30 95, 40 95
+                     L 50 95
+                     L 46 108
+                     L 62 95
+                     L 82 95
+                     Q 92 95, 92 85
+                     L 92 48"
+                  stroke="#1a685e" stroke-width="9"
+                  stroke-linejoin="round" stroke-linecap="round"
+                  fill="none"/>
+            <!-- Roof pitched on top -->
+            <path d="M 30 48 L 61 22 L 92 48"
+                  stroke="#1a685e" stroke-width="9"
+                  stroke-linejoin="round" stroke-linecap="round"
+                  fill="none"/>
+            <!-- Conversation dots -->
+            <circle cx="48" cy="70" r="4" fill="#c75d3e"/>
+            <circle cx="61" cy="70" r="4" fill="#c75d3e"/>
+            <circle cx="74" cy="70" r="4" fill="#c75d3e"/>
+          </svg>
+        </div>
+        <div class="mt-5">
+          <div class="serif text-xl font-bold">Dialogue</div>
+          <div class="text-xs uppercase tracking-widest text-clay-500 mt-1">Chat &middot; roof</div>
+          <p class="mt-3 text-sm text-ink-500">Speech bubble wearing a rooftop. Maps directly to the chat-first product &mdash; every employer action starts with an unlock.</p>
+          <div class="mt-4 pt-4 border-t border-cream-200 flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-500">
+            <span>✓ Product-true</span>
+            <span>✓ Distinctive</span>
+            <span>△ Busier shape</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Concept 6 — Under One Roof (two figures) -->
+      <div class="rounded-3xl border border-cream-200 bg-white p-7 shadow-soft">
+        <div class="flex items-center justify-between mb-5">
+          <span class="text-xs uppercase tracking-widest text-sage-700 font-semibold">Concept 6</span>
+          <span class="px-2 py-0.5 rounded-full bg-cream-200 text-ink-700 text-[10px] uppercase tracking-widest font-semibold">Marketplace</span>
+        </div>
+        <div class="h-36 flex items-center justify-center bg-cream-50 rounded-2xl">
+          <svg viewBox="0 0 120 120" class="w-28 h-28" fill="none">
+            <!-- Pitched roof -->
+            <path d="M 10 60 L 60 18 L 110 60"
+                  stroke="#1a685e" stroke-width="10"
+                  stroke-linejoin="round" stroke-linecap="round"
+                  fill="none"/>
+            <!-- Figure A (sage = employer) -->
+            <circle cx="40" cy="78" r="7" fill="#1a685e"/>
+            <path d="M 28 102 L 28 90 Q 28 83 40 83 Q 52 83 52 90 L 52 102 Z" fill="#1a685e"/>
+            <!-- Figure B (clay = helper) -->
+            <circle cx="80" cy="78" r="7" fill="#c75d3e"/>
+            <path d="M 68 102 L 68 90 Q 68 83 80 83 Q 92 83 92 90 L 92 102 Z" fill="#c75d3e"/>
+          </svg>
+        </div>
+        <div class="mt-5">
+          <div class="serif text-xl font-bold">Under One Roof</div>
+          <div class="text-xs uppercase tracking-widest text-clay-500 mt-1">Two figures &middot; shared shelter</div>
+          <p class="mt-3 text-sm text-ink-500">Employer and helper meet under the same roofline. Most honest about what the marketplace does.</p>
+          <div class="mt-4 pt-4 border-t border-cream-200 flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-500">
+            <span>✓ Story</span>
+            <span>✓ Two-colour use</span>
+            <span>△ Detail at 16px</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Concept 7 — Shield (solid) -->
+      <div class="rounded-3xl border border-cream-200 bg-white p-7 shadow-soft">
+        <div class="flex items-center justify-between mb-5">
+          <span class="text-xs uppercase tracking-widest text-sage-700 font-semibold">Concept 7</span>
+          <span class="px-2 py-0.5 rounded-full bg-sage-900 text-cream-100 text-[10px] uppercase tracking-widest font-semibold">Bold</span>
+        </div>
+        <div class="h-36 flex items-center justify-center bg-cream-50 rounded-2xl">
+          <svg viewBox="0 0 120 120" class="w-28 h-28" fill="none">
+            <!-- Filled shield with pitched top -->
+            <path d="M 60 14
+                     L 100 36
+                     L 100 72
+                     C 100 92, 82 105, 60 112
+                     C 38 105, 20 92, 20 72
+                     L 20 36 Z"
+                  fill="#1a685e"/>
+            <!-- Cream figure cutout -->
+            <circle cx="60" cy="54" r="9" fill="#faf7f2"/>
+            <path d="M 45 88 L 45 75 Q 45 67 53 67 L 67 67 Q 75 67 75 75 L 75 88 Z" fill="#faf7f2"/>
+            <!-- Clay accent -->
+            <circle cx="60" cy="54" r="4" fill="#c75d3e"/>
+          </svg>
+        </div>
+        <div class="mt-5">
+          <div class="serif text-xl font-bold">Shield</div>
+          <div class="text-xs uppercase tracking-widest text-clay-500 mt-1">Solid &middot; trust</div>
+          <p class="mt-3 text-sm text-ink-500">Filled silhouette, cream figure cutout, clay accent. Reads as safety, verification, official. Strongest on a pale surface.</p>
+          <div class="mt-4 pt-4 border-t border-cream-200 flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-500">
+            <span>✓ Bold</span>
+            <span>✓ Trust signal</span>
+            <span>△ Heavier feel</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Side-by-side comparison strip -->
+    <div class="mt-14 rounded-3xl bg-sage-900 p-10">
+      <div class="text-xs uppercase tracking-widest text-sage-400 text-center mb-6">All 7 side by side</div>
+      <div class="flex items-center justify-around gap-4 flex-wrap">
+        <!-- 1 Arch -->
+        <div class="text-center">
+          <svg viewBox="0 0 120 120" class="w-14 h-14 mx-auto" fill="none">
+            <path d="M 18 102 C 18 46, 40 18, 60 18 C 80 18, 102 46, 102 102" stroke="#faf7f2" stroke-width="11" stroke-linecap="round" fill="none"/>
+            <circle cx="60" cy="60" r="9" fill="#c75d3e"/>
+            <path d="M 42 96 L 42 82 C 42 73, 50 71, 60 71 C 70 71, 78 73, 78 82 L 78 96 Z" fill="#c75d3e"/>
+          </svg>
+          <div class="text-[10px] uppercase tracking-widest text-sage-400 mt-2">1 Haven</div>
+        </div>
+        <!-- 2 Cottage -->
+        <div class="text-center">
+          <svg viewBox="0 0 120 120" class="w-14 h-14 mx-auto" fill="none">
+            <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#faf7f2" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+            <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+            <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+          </svg>
+          <div class="text-[10px] uppercase tracking-widest text-sage-400 mt-2">2 Cottage</div>
+        </div>
+        <!-- 3 Twin -->
+        <div class="text-center">
+          <svg viewBox="0 0 120 120" class="w-14 h-14 mx-auto" fill="none">
+            <path d="M 22 100 L 22 54 L 37 38 L 52 54 L 52 100" stroke="#faf7f2" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+            <path d="M 68 100 L 68 54 L 83 38 L 98 54 L 98 100" stroke="#faf7f2" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+            <path d="M 52 72 L 68 72" stroke="#c75d3e" stroke-width="8" stroke-linecap="round"/>
+          </svg>
+          <div class="text-[10px] uppercase tracking-widest text-sage-400 mt-2">3 Twin</div>
+        </div>
+        <!-- 4 Nest -->
+        <div class="text-center">
+          <svg viewBox="0 0 120 120" class="w-14 h-14 mx-auto" fill="none">
+            <path d="M 16 55 Q 60 118, 104 55" stroke="#faf7f2" stroke-width="11" stroke-linecap="round" fill="none"/>
+            <circle cx="60" cy="48" r="10" fill="#c75d3e"/>
+          </svg>
+          <div class="text-[10px] uppercase tracking-widest text-sage-400 mt-2">4 Nest</div>
+        </div>
+        <!-- 5 Dialogue -->
+        <div class="text-center">
+          <svg viewBox="0 0 120 120" class="w-14 h-14 mx-auto" fill="none">
+            <path d="M 30 48 L 30 85 Q 30 95, 40 95 L 50 95 L 46 108 L 62 95 L 82 95 Q 92 95, 92 85 L 92 48" stroke="#faf7f2" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+            <path d="M 30 48 L 61 22 L 92 48" stroke="#faf7f2" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+            <circle cx="48" cy="70" r="4" fill="#c75d3e"/>
+            <circle cx="61" cy="70" r="4" fill="#c75d3e"/>
+            <circle cx="74" cy="70" r="4" fill="#c75d3e"/>
+          </svg>
+          <div class="text-[10px] uppercase tracking-widest text-sage-400 mt-2">5 Dialogue</div>
+        </div>
+        <!-- 6 Roof -->
+        <div class="text-center">
+          <svg viewBox="0 0 120 120" class="w-14 h-14 mx-auto" fill="none">
+            <path d="M 10 60 L 60 18 L 110 60" stroke="#faf7f2" stroke-width="10" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+            <circle cx="40" cy="78" r="7" fill="#faf7f2"/>
+            <path d="M 28 102 L 28 90 Q 28 83 40 83 Q 52 83 52 90 L 52 102 Z" fill="#faf7f2"/>
+            <circle cx="80" cy="78" r="7" fill="#c75d3e"/>
+            <path d="M 68 102 L 68 90 Q 68 83 80 83 Q 92 83 92 90 L 92 102 Z" fill="#c75d3e"/>
+          </svg>
+          <div class="text-[10px] uppercase tracking-widest text-sage-400 mt-2">6 Roof</div>
+        </div>
+        <!-- 7 Shield -->
+        <div class="text-center">
+          <svg viewBox="0 0 120 120" class="w-14 h-14 mx-auto" fill="none">
+            <path d="M 60 14 L 100 36 L 100 72 C 100 92, 82 105, 60 112 C 38 105, 20 92, 20 72 L 20 36 Z" fill="#faf7f2"/>
+            <circle cx="60" cy="54" r="9" fill="#0f3c36"/>
+            <path d="M 45 88 L 45 75 Q 45 67 53 67 L 67 67 Q 75 67 75 75 L 75 88 Z" fill="#0f3c36"/>
+            <circle cx="60" cy="54" r="4" fill="#c75d3e"/>
+          </svg>
+          <div class="text-[10px] uppercase tracking-widest text-sage-400 mt-2">7 Shield</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== HORIZONTAL LOCKUP ========== -->
+<section class="py-24 bg-cream-50 border-b border-cream-200">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-xs uppercase tracking-widest text-sage-700">Lockup · horizontal</div>
+    <h2 class="serif text-3xl font-bold mt-2">For headers, business cards, email sign-offs</h2>
+
+    <!-- Main lockup -->
+    <div class="mt-10 rounded-3xl bg-white border border-cream-200 p-16 shadow-soft flex items-center justify-center">
+      <div class="flex items-center gap-5">
+        <svg viewBox="0 0 120 120" class="w-20 h-20" fill="none">
+          <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#1a685e" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+          <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+          <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+        </svg>
+        <div class="serif-display text-6xl font-bold text-sage-900">Helper<span class="text-clay-500">Haven</span></div>
+      </div>
+    </div>
+
+    <!-- Lockup variants -->
+    <div class="mt-6 grid md:grid-cols-2 gap-6">
+      <div class="rounded-2xl bg-white border border-cream-200 p-8 flex items-center justify-center">
+        <div class="flex items-center gap-3">
+          <svg viewBox="0 0 120 120" class="w-10 h-10" fill="none">
+            <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#1a685e" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+            <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+            <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+          </svg>
+          <span class="serif text-2xl font-bold text-sage-900">HelperHaven</span>
+        </div>
+      </div>
+      <div class="rounded-2xl bg-white border border-cream-200 p-8 flex items-center justify-center">
+        <div class="flex items-center gap-3">
+          <svg viewBox="0 0 120 120" class="w-10 h-10" fill="none">
+            <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#1a685e" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+            <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+            <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+          </svg>
+          <span class="serif text-2xl font-bold text-sage-900">Helper<span class="text-clay-500">Haven</span></span>
+        </div>
+      </div>
+    </div>
+
+    <p class="mt-6 text-sm text-ink-500 text-center">Two wordmark options. Solid sage (calmer, corporate) vs. sage + clay (warmer, brand-forward). Currently direction-a nav uses the brand-forward version.</p>
+  </div>
+</section>
+
+<!-- ========== STACKED LOCKUP ========== -->
+<section class="py-24 bg-white border-b border-cream-200">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-xs uppercase tracking-widest text-sage-700">Lockup · stacked</div>
+    <h2 class="serif text-3xl font-bold mt-2">For square placements: avatars, app icons, social posts</h2>
+
+    <div class="mt-10 grid md:grid-cols-3 gap-6">
+
+      <!-- Stacked on cream -->
+      <div class="rounded-3xl bg-cream-100 border border-cream-200 p-10 flex flex-col items-center justify-center aspect-square">
+        <svg viewBox="0 0 120 120" class="w-28 h-28" fill="none">
+          <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#1a685e" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+          <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+          <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+        </svg>
+        <div class="serif text-2xl font-bold text-sage-900 mt-5">HelperHaven</div>
+        <div class="text-[10px] uppercase tracking-[0.2em] text-sage-700 mt-1">Singapore</div>
+      </div>
+
+      <!-- Stacked on sage -->
+      <div class="rounded-3xl bg-sage-900 p-10 flex flex-col items-center justify-center aspect-square">
+        <svg viewBox="0 0 120 120" class="w-28 h-28" fill="none">
+          <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#faf7f2" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+          <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+          <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+        </svg>
+        <div class="serif text-2xl font-bold text-cream-100 mt-5">HelperHaven</div>
+        <div class="text-[10px] uppercase tracking-[0.2em] text-sage-400 mt-1">Singapore</div>
+      </div>
+
+      <!-- Stacked on clay -->
+      <div class="rounded-3xl bg-clay-500 p-10 flex flex-col items-center justify-center aspect-square">
+        <svg viewBox="0 0 120 120" class="w-28 h-28" fill="none">
+          <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#faf7f2" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+          <circle cx="60" cy="60" r="8" fill="#faf7f2"/>
+          <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#faf7f2"/>
+        </svg>
+        <div class="serif text-2xl font-bold text-cream-100 mt-5">HelperHaven</div>
+        <div class="text-[10px] uppercase tracking-[0.2em] text-cream-200 mt-1">Singapore</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========== FAVICON / ICON SIZES ========== -->
+<section class="py-24 bg-cream-50 border-b border-cream-200">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-xs uppercase tracking-widest text-sage-700">Scale test · favicon sizes</div>
+    <h2 class="serif text-3xl font-bold mt-2">Still readable at 16 pixels</h2>
+    <p class="mt-3 text-ink-500 max-w-xl">The acid test of a logo &mdash; the favicon tab. Here&rsquo;s the Haven mark at every size you&rsquo;ll ever render it.</p>
+
+    <div class="mt-10 rounded-3xl bg-white border border-cream-200 p-12">
+      <div class="flex items-end justify-around flex-wrap gap-10">
+        <div class="text-center">
+          <div class="bg-white p-3 rounded-lg border border-cream-200 inline-block">
+            <svg viewBox="0 0 120 120" width="128" height="128" fill="none">
+              <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#1a685e" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+              <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+              <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+            </svg>
+          </div>
+          <div class="text-xs text-ink-500 mt-3 font-mono">128&times;128</div>
+        </div>
+        <div class="text-center">
+          <div class="bg-white p-3 rounded-lg border border-cream-200 inline-block">
+            <svg viewBox="0 0 120 120" width="64" height="64" fill="none">
+              <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#1a685e" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+              <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+              <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+            </svg>
+          </div>
+          <div class="text-xs text-ink-500 mt-3 font-mono">64&times;64</div>
+        </div>
+        <div class="text-center">
+          <div class="bg-white p-3 rounded-lg border border-cream-200 inline-block">
+            <svg viewBox="0 0 120 120" width="48" height="48" fill="none">
+              <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#1a685e" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+              <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+              <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+            </svg>
+          </div>
+          <div class="text-xs text-ink-500 mt-3 font-mono">48&times;48</div>
+        </div>
+        <div class="text-center">
+          <div class="bg-white p-3 rounded-lg border border-cream-200 inline-block">
+            <svg viewBox="0 0 120 120" width="32" height="32" fill="none">
+              <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#1a685e" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+              <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+              <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+            </svg>
+          </div>
+          <div class="text-xs text-ink-500 mt-3 font-mono">32&times;32</div>
+        </div>
+        <div class="text-center">
+          <div class="bg-white p-3 rounded-lg border border-cream-200 inline-block">
+            <svg viewBox="0 0 120 120" width="24" height="24" fill="none">
+              <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#1a685e" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+              <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+              <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+            </svg>
+          </div>
+          <div class="text-xs text-ink-500 mt-3 font-mono">24&times;24</div>
+        </div>
+        <div class="text-center">
+          <div class="bg-white p-3 rounded-lg border border-cream-200 inline-block">
+            <svg viewBox="0 0 120 120" width="16" height="16" fill="none">
+              <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#1a685e" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+              <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+              <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+            </svg>
+          </div>
+          <div class="text-xs text-ink-500 mt-3 font-mono">16&times;16</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Browser chrome preview -->
+    <div class="mt-8 rounded-3xl bg-ink-900 p-6">
+      <div class="bg-ink-700 rounded-t-xl px-4 py-2 flex items-center gap-3">
+        <span class="w-3 h-3 rounded-full bg-clay-500"></span>
+        <span class="w-3 h-3 rounded-full bg-sage-400"></span>
+        <span class="w-3 h-3 rounded-full bg-sage-100"></span>
+        <div class="flex ml-4 gap-1">
+          <div class="bg-cream-100 rounded-t px-3 py-1 flex items-center gap-2 text-xs text-ink-900">
+            <svg viewBox="0 0 120 120" width="14" height="14" fill="none">
+              <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#1a685e" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+              <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+              <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+            </svg>
+            HelperHaven — Singapore&rsquo;s helper marketplace
+          </div>
+        </div>
+      </div>
+      <div class="bg-cream-100 h-20 rounded-b-xl"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== REVERSE & MONOCHROME ========== -->
+<section class="py-24 bg-white border-b border-cream-200">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-xs uppercase tracking-widest text-sage-700">Variants</div>
+    <h2 class="serif text-3xl font-bold mt-2">Reverse &amp; monochrome</h2>
+    <p class="mt-3 text-ink-500 max-w-xl">For single-colour printing, embossing, dark backgrounds, or the occasional black-tie situation.</p>
+
+    <div class="mt-10 grid md:grid-cols-4 gap-4">
+
+      <!-- Two-colour on cream (primary) -->
+      <div class="rounded-2xl bg-cream-100 border border-cream-200 aspect-square flex flex-col items-center justify-center p-6">
+        <svg viewBox="0 0 120 120" class="w-20 h-20" fill="none">
+          <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#1a685e" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+          <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+          <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+        </svg>
+        <div class="text-[10px] uppercase tracking-widest text-ink-500 mt-4">Primary</div>
+      </div>
+
+      <!-- Reverse on sage -->
+      <div class="rounded-2xl bg-sage-900 aspect-square flex flex-col items-center justify-center p-6">
+        <svg viewBox="0 0 120 120" class="w-20 h-20" fill="none">
+          <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#faf7f2" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+          <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+          <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+        </svg>
+        <div class="text-[10px] uppercase tracking-widest text-sage-400 mt-4">Reverse</div>
+      </div>
+
+      <!-- All sage -->
+      <div class="rounded-2xl bg-cream-100 border border-cream-200 aspect-square flex flex-col items-center justify-center p-6">
+        <svg viewBox="0 0 120 120" class="w-20 h-20" fill="none">
+          <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#1a685e" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+          <circle cx="60" cy="60" r="8" fill="#1a685e"/>
+          <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#1a685e"/>
+        </svg>
+        <div class="text-[10px] uppercase tracking-widest text-ink-500 mt-4">All sage</div>
+      </div>
+
+      <!-- Ink on cream (print) -->
+      <div class="rounded-2xl bg-cream-100 border border-cream-200 aspect-square flex flex-col items-center justify-center p-6">
+        <svg viewBox="0 0 120 120" class="w-20 h-20" fill="none">
+          <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#1c2927" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+          <circle cx="60" cy="60" r="8" fill="#1c2927"/>
+          <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#1c2927"/>
+        </svg>
+        <div class="text-[10px] uppercase tracking-widest text-ink-500 mt-4">Ink (print)</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========== COLOUR TOKENS ========== -->
+<section class="py-24 bg-cream-50 border-b border-cream-200">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-xs uppercase tracking-widest text-sage-700">Colour tokens</div>
+    <h2 class="serif text-3xl font-bold mt-2">The palette, exactly</h2>
+    <p class="mt-3 text-ink-500 max-w-xl">These are the same tokens wired into <code class="text-sage-700">tailwind.config</code> in direction-a. Copy the hex values straight into design tools.</p>
+
+    <div class="mt-10 grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="rounded-2xl overflow-hidden border border-cream-200">
+        <div class="h-24" style="background:#1a685e"></div>
+        <div class="p-4 bg-white">
+          <div class="serif font-bold">Sage 700</div>
+          <div class="text-xs text-ink-500 font-mono mt-1">#1a685e</div>
+          <div class="text-xs text-ink-500 mt-2">Roof &middot; primary strokes &middot; wordmark</div>
+        </div>
+      </div>
+      <div class="rounded-2xl overflow-hidden border border-cream-200">
+        <div class="h-24" style="background:#c75d3e"></div>
+        <div class="p-4 bg-white">
+          <div class="serif font-bold">Clay 500</div>
+          <div class="text-xs text-ink-500 font-mono mt-1">#c75d3e</div>
+          <div class="text-xs text-ink-500 mt-2">Figure &middot; accent &middot; CTA buttons</div>
+        </div>
+      </div>
+      <div class="rounded-2xl overflow-hidden border border-cream-200">
+        <div class="h-24" style="background:#faf7f2"></div>
+        <div class="p-4 bg-white">
+          <div class="serif font-bold">Cream 100</div>
+          <div class="text-xs text-ink-500 font-mono mt-1">#faf7f2</div>
+          <div class="text-xs text-ink-500 mt-2">Background &middot; reverse stroke</div>
+        </div>
+      </div>
+      <div class="rounded-2xl overflow-hidden border border-cream-200">
+        <div class="h-24" style="background:#0f3c36"></div>
+        <div class="p-4 bg-white">
+          <div class="serif font-bold">Sage 900</div>
+          <div class="text-xs text-ink-500 font-mono mt-1">#0f3c36</div>
+          <div class="text-xs text-ink-500 mt-2">Dark surfaces &middot; deep text</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CLEARSPACE + DON'TS ========== -->
+<section class="py-24 bg-white border-b border-cream-200">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-xs uppercase tracking-widest text-sage-700">Usage</div>
+    <h2 class="serif text-3xl font-bold mt-2">Clearspace &amp; don&rsquo;ts</h2>
+
+    <div class="mt-10 grid md:grid-cols-2 gap-8">
+
+      <!-- Clearspace -->
+      <div class="rounded-3xl bg-cream-50 border border-cream-200 p-8">
+        <div class="serif font-bold text-lg mb-1">Give it room to breathe</div>
+        <p class="text-sm text-ink-500 mb-6">Minimum clearspace = half the mark&rsquo;s height on every side. Don&rsquo;t crowd it with other elements.</p>
+        <div class="relative mx-auto w-fit">
+          <!-- Dashed clearspace box -->
+          <div class="absolute inset-0 -m-14 border-2 border-dashed border-sage-400 rounded-2xl"></div>
+          <svg viewBox="0 0 120 120" class="w-28 h-28 relative" fill="none">
+            <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#1a685e" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+            <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+            <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+          </svg>
+        </div>
+        <div class="mt-16 text-xs text-ink-500 text-center">dashed line = minimum clearspace</div>
+      </div>
+
+      <!-- Don'ts -->
+      <div class="rounded-3xl bg-cream-50 border border-cream-200 p-8">
+        <div class="serif font-bold text-lg mb-1">Don&rsquo;t do these</div>
+        <p class="text-sm text-ink-500 mb-6">The palette is the brand. Off-brand colour is the fastest way to look fake.</p>
+
+        <div class="space-y-3">
+          <div class="flex items-center gap-4 p-3 rounded-xl bg-white border border-cream-200">
+            <svg viewBox="0 0 120 120" class="w-12 h-12 shrink-0" fill="none">
+              <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#3b82f6" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+              <circle cx="60" cy="60" r="8" fill="#eab308"/>
+              <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#eab308"/>
+            </svg>
+            <div class="flex-1 text-sm text-ink-700"><span class="text-clay-500 font-semibold">✗</span> Don&rsquo;t recolour</div>
+          </div>
+          <div class="flex items-center gap-4 p-3 rounded-xl bg-white border border-cream-200">
+            <svg viewBox="0 0 120 120" class="w-12 h-12 shrink-0 transform scale-y-75" fill="none">
+              <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#1a685e" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+              <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+              <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+            </svg>
+            <div class="flex-1 text-sm text-ink-700"><span class="text-clay-500 font-semibold">✗</span> Don&rsquo;t squash or stretch</div>
+          </div>
+          <div class="flex items-center gap-4 p-3 rounded-xl bg-white border border-cream-200">
+            <svg viewBox="0 0 120 120" class="w-12 h-12 shrink-0" style="filter: drop-shadow(2px 2px 0 #c75d3e);" fill="none">
+              <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#1a685e" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+              <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+              <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+            </svg>
+            <div class="flex-1 text-sm text-ink-700"><span class="text-clay-500 font-semibold">✗</span> Don&rsquo;t add effects or drop shadows</div>
+          </div>
+          <div class="flex items-center gap-4 p-3 rounded-xl bg-clay-500 border border-cream-200">
+            <svg viewBox="0 0 120 120" class="w-12 h-12 shrink-0" fill="none">
+              <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#1a685e" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+              <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+              <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+            </svg>
+            <div class="flex-1 text-sm text-cream-100"><span class="font-semibold">✗</span> Don&rsquo;t put primary mark on clay &mdash; use the reverse variant</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========== IN CONTEXT ========== -->
+<section class="py-24 bg-cream-100">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-xs uppercase tracking-widest text-sage-700">In context</div>
+    <h2 class="serif text-3xl font-bold mt-2">How it looks in the wild</h2>
+
+    <div class="mt-10 grid md:grid-cols-2 gap-6">
+
+      <!-- Mock browser header -->
+      <div class="rounded-2xl bg-white border border-cream-200 p-6 shadow-soft">
+        <div class="flex items-center justify-between pb-4 border-b border-cream-200">
+          <div class="flex items-center gap-2">
+            <svg viewBox="0 0 120 120" width="32" height="32" fill="none">
+              <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#1a685e" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+              <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+              <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+            </svg>
+            <span class="serif text-xl font-bold text-sage-900">HelperHaven</span>
+          </div>
+          <div class="flex gap-6 text-sm text-ink-700">
+            <span>How it works</span>
+            <span>Employers</span>
+            <span>Helpers</span>
+          </div>
+        </div>
+        <div class="pt-4 text-xs text-ink-500">→ Website navigation bar</div>
+      </div>
+
+      <!-- Mobile app icon -->
+      <div class="rounded-2xl bg-white border border-cream-200 p-6 shadow-soft">
+        <div class="flex items-center gap-6">
+          <div class="rounded-3xl bg-cream-100 w-24 h-24 flex items-center justify-center shadow-lift" style="border-radius: 22%;">
+            <svg viewBox="0 0 120 120" class="w-16 h-16" fill="none">
+              <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#1a685e" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+              <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+              <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+            </svg>
+          </div>
+          <div>
+            <div class="serif font-bold">HelperHaven</div>
+            <div class="text-xs text-ink-500">marketplace · Singapore</div>
+          </div>
+        </div>
+        <div class="pt-4 mt-4 border-t border-cream-200 text-xs text-ink-500">→ iOS / Android home-screen icon</div>
+      </div>
+
+      <!-- Email signature -->
+      <div class="rounded-2xl bg-white border border-cream-200 p-6 shadow-soft">
+        <div class="text-sm text-ink-700 leading-relaxed">
+          Best,<br/>
+          <strong class="text-ink-900">Tan Ji</strong><br/>
+          <span class="text-ink-500">Founder, HelperHaven</span>
+          <div class="mt-3 flex items-center gap-2">
+            <svg viewBox="0 0 120 120" width="28" height="28" fill="none">
+              <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#1a685e" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+              <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+              <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+            </svg>
+            <span class="serif font-bold text-sage-900">Helper<span class="text-clay-500">Haven</span></span>
+          </div>
+          <div class="text-xs text-ink-500 mt-1">helperhaven.sg &middot; MOM EA licence 24A1234</div>
+        </div>
+        <div class="pt-4 mt-4 border-t border-cream-200 text-xs text-ink-500">→ Email signature</div>
+      </div>
+
+      <!-- Business card -->
+      <div class="rounded-2xl bg-sage-900 p-6 shadow-lift aspect-[1.75/1] flex flex-col justify-between">
+        <div>
+          <svg viewBox="0 0 120 120" width="40" height="40" fill="none">
+            <path d="M 14 100 L 14 55 L 60 16 L 106 55 L 106 100 Z" stroke="#faf7f2" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+            <circle cx="60" cy="60" r="8" fill="#c75d3e"/>
+            <path d="M 45 93 L 45 80 C 45 72, 51 70, 60 70 C 69 70, 75 72, 75 80 L 75 93 Z" fill="#c75d3e"/>
+          </svg>
+        </div>
+        <div>
+          <div class="serif text-cream-100 text-2xl font-bold">Helper<span class="text-clay-500">Haven</span></div>
+          <div class="text-xs text-sage-400 mt-2">Singapore&rsquo;s trusted helper marketplace</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="py-10 bg-sage-900 text-sage-400 text-center text-sm">
+  HelperHaven &middot; logo exploration v0.1 &middot; Fraunces + Inter on sage/clay/cream
+</footer>
+
+</body>
+</html>
