@@ -27,6 +27,34 @@ const HOUSING_OPTIONS: { code: HousingType; label: string }[] = [
   { code: 'LANDED', label: 'Landed' },
 ];
 
+const SINGAPORE_DISTRICTS = [
+  'Ang Mo Kio', 'Bedok', 'Bishan', 'Bukit Batok', 'Bukit Merah',
+  'Bukit Panjang', 'Bukit Timah', 'Central', 'Choa Chu Kang', 'Clementi',
+  'Downtown Core', 'Geylang', 'Hougang', 'Jurong East', 'Jurong West',
+  'Kallang', 'Marine Parade', 'Novena', 'Outram', 'Pasir Ris',
+  'Punggol', 'Queenstown', 'Sembawang', 'Sengkang', 'Serangoon',
+  'Tampines', 'Tengah', 'Toa Payoh', 'Woodlands', 'Yishun',
+];
+
+const OFF_DAY_OPTIONS = [
+  'One full Sunday per week',
+  'Two Sundays per month',
+  'One Sunday per month',
+  'Alternate Sundays',
+  'Any weekday (negotiable)',
+  'No fixed day off',
+];
+
+const LANGUAGE_OPTIONS = [
+  'English',
+  'Mandarin',
+  'Cantonese',
+  'Malay',
+  'Tamil',
+  'Hokkien',
+  'Any language',
+];
+
 const PURPOSE_TAGS = [
   'infant_care',
   'toddler_care',
@@ -51,6 +79,7 @@ interface FormState {
   salaryOfferSgdMin: string;
   salaryOfferSgdMax: string;
   offDayPolicy: string;
+  preferredLanguage: string;
   hiringPurpose: string;
   purposeTags: string[];
   weights: FiveVector;
@@ -67,6 +96,7 @@ const EMPTY: FormState = {
   salaryOfferSgdMin: '',
   salaryOfferSgdMax: '',
   offDayPolicy: '',
+  preferredLanguage: '',
   hiringPurpose: '',
   purposeTags: [],
   weights: ZERO_VECTOR,
@@ -97,13 +127,16 @@ export default function EmployerOnboarding() {
           fetchSkills(),
           fetchEmployerProfile(),
         ]);
-        if (cancelled) return;
-        setSkillOptions(skills);
-        if (existing) setForm(toFormState(existing));
+        if (!cancelled) {
+          setSkillOptions(skills);
+          if (existing) setForm(toFormState(existing));
+          setLoaded(true);
+        }
       } catch (err) {
-        if (!cancelled) setServerError(asMessage(err, 'Could not load your profile.'));
-      } finally {
-        if (!cancelled) setLoaded(true);
+        if (!cancelled) {
+          setServerError(asMessage(err, 'Could not load your profile.'));
+          setLoaded(true);
+        }
       }
     })();
     return () => {
@@ -193,7 +226,8 @@ export default function EmployerOnboarding() {
         district: form.district.trim() || null,
         salaryOfferSgdMin: form.salaryOfferSgdMin ? Number(form.salaryOfferSgdMin) : null,
         salaryOfferSgdMax: form.salaryOfferSgdMax ? Number(form.salaryOfferSgdMax) : null,
-        offDayPolicy: form.offDayPolicy.trim() || null,
+        offDayPolicy: form.offDayPolicy || null,
+        preferredLanguage: form.preferredLanguage || null,
         hiringPurpose: form.hiringPurpose.trim() || null,
         purposeTags: form.purposeTags,
         weights: form.weights,
@@ -332,12 +366,16 @@ function Step1({
       </WizardField>
 
       <WizardField label="District (optional)">
-        <input
+        <select
           value={form.district}
           onChange={(e) => update('district', e.target.value)}
-          placeholder="e.g. Bishan"
           className={inputCls()}
-        />
+        >
+          <option value="">Select district…</option>
+          {SINGAPORE_DISTRICTS.map((d) => (
+            <option key={d} value={d}>{d}</option>
+          ))}
+        </select>
       </WizardField>
 
       <label className="flex items-start gap-2.5 text-sm text-ink-700">
@@ -428,13 +466,30 @@ function Step3({
         </WizardField>
       </div>
 
-      <WizardField label="Off-day policy" hint="Optional — e.g. weekly Sundays off">
-        <input
+      <WizardField label="Preferred language of communication" hint="Language you'd like to use with your helper">
+        <select
+          value={form.preferredLanguage}
+          onChange={(e) => update('preferredLanguage', e.target.value)}
+          className={inputCls()}
+        >
+          <option value="">Select language…</option>
+          {LANGUAGE_OPTIONS.map((l) => (
+            <option key={l} value={l}>{l}</option>
+          ))}
+        </select>
+      </WizardField>
+
+      <WizardField label="Off-day policy" hint="Optional">
+        <select
           value={form.offDayPolicy}
           onChange={(e) => update('offDayPolicy', e.target.value)}
-          placeholder="One full Sunday off each week"
           className={inputCls()}
-        />
+        >
+          <option value="">Select policy…</option>
+          {OFF_DAY_OPTIONS.map((o) => (
+            <option key={o} value={o}>{o}</option>
+          ))}
+        </select>
       </WizardField>
     </>
   );
@@ -454,6 +509,7 @@ function toFormState(p: EmployerProfile): FormState {
     salaryOfferSgdMin: p.salaryOfferSgdMin != null ? String(p.salaryOfferSgdMin) : '',
     salaryOfferSgdMax: p.salaryOfferSgdMax != null ? String(p.salaryOfferSgdMax) : '',
     offDayPolicy: p.offDayPolicy ?? '',
+    preferredLanguage: p.preferredLanguage ?? '',
     hiringPurpose: p.hiringPurpose ?? '',
     purposeTags: p.purposeTags ?? [],
     weights: p.weights,

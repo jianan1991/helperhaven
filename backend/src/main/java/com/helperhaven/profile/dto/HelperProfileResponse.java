@@ -22,6 +22,10 @@ public record HelperProfileResponse(
         Integer heightCm,
         Integer weightKg,
         Boolean willingLiveIn,
+        Boolean comfortableWithChildren,
+        Boolean comfortableWithPets,
+        Boolean halal,
+        String allergies,
         Integer expectedSalarySgd,
         LocalDate availableFrom,
         String currentLocation,
@@ -42,9 +46,10 @@ public record HelperProfileResponse(
         return new HelperProfileResponse(
                 userId, displayFirstName, fullName, nationality, dateOfBirth,
                 yearsExperience, religion, maritalStatus, education, bio,
-                heightCm, weightKg, willingLiveIn, expectedSalarySgd,
-                availableFrom, currentLocation, newPhotoUrl, skills, languages,
-                availableForTransfer, transferAvailableFrom
+                heightCm, weightKg, willingLiveIn,
+                comfortableWithChildren, comfortableWithPets, halal, allergies,
+                expectedSalarySgd, availableFrom, currentLocation, newPhotoUrl,
+                skills, languages, availableForTransfer, transferAvailableFrom
         );
     }
 
@@ -63,6 +68,10 @@ public record HelperProfileResponse(
                 p.getHeightCm() == null ? null : p.getHeightCm().intValue(),
                 p.getWeightKg() == null ? null : p.getWeightKg().intValue(),
                 p.getWillingLiveIn(),
+                Boolean.TRUE.equals(p.getComfortableWithChildren()),
+                Boolean.TRUE.equals(p.getComfortableWithPets()),
+                Boolean.TRUE.equals(p.getHalal()),
+                p.getAllergies(),
                 p.getExpectedSalarySgd(),
                 p.getAvailableFrom(),
                 p.getCurrentLocation(),

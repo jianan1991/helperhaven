@@ -33,10 +33,10 @@ export default function FiveVectorEditor({
           <input
             type="range"
             min={0}
-            max={100}
+            max={value[key] + remaining}
             step={1}
             value={value[key]}
-            onChange={(e) => onChange({ ...value, [key]: Number(e.target.value) })}
+            onChange={(e) => onChange({ ...value, [key]: Math.min(Number(e.target.value), value[key] + remaining) })}
             className="w-full accent-sage-500"
           />
         </div>

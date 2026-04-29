@@ -1,6 +1,7 @@
 package com.helperhaven.matches.dto;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -12,11 +13,17 @@ import java.util.UUID;
 public record MatchView(
         UUID counterpartyUserId,
         String displayName,
-        String subtitle,           // helper: nationality;  employer: housing type
-        Integer age,               // helper only
-        Integer yearsExperience,   // helper only
+        String subtitle,            // helper: nationality;  employer: housing type
+        Integer age,                // helper only
+        Integer yearsExperience,    // helper only
         String bio,
-        String photoUrl,           // helper only — fresh signed GET URL
-        double score,              // 0..100
-        List<String> reasons       // top-3 5-vector keys driving the score
+        String photoUrl,            // helper only — fresh signed GET URL
+        double score,               // 0..100
+        List<String> reasons,       // top-3 5-vector keys driving the score
+        Map<String, Integer> scores,// full 5-vector breakdown
+        boolean unlocked,           // employer has an open conversation with this helper
+        Boolean comfortableWithChildren, // null unless unlocked
+        Boolean comfortableWithPets,
+        Boolean halal,
+        String allergies
 ) {}

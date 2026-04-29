@@ -52,6 +52,10 @@ export interface HelperProfile {
   heightCm: number | null;
   weightKg: number | null;
   willingLiveIn: boolean;
+  comfortableWithChildren: boolean;
+  comfortableWithPets: boolean;
+  halal: boolean;
+  allergies: string | null;
   expectedSalarySgd: number | null;
   availableFrom: string | null;
   currentLocation: string | null;
@@ -79,6 +83,7 @@ export interface EmployerProfile {
   salaryOfferSgdMin: number | null;
   salaryOfferSgdMax: number | null;
   offDayPolicy: string | null;
+  preferredLanguage: string | null;
   hiringPurpose: string | null;
   purposeTags: string[];
   weights: FiveVector;
@@ -185,6 +190,12 @@ export interface MatchView {
   photoUrl: string | null;
   score: number;
   reasons: string[];
+  scores: FiveVector;
+  unlocked: boolean;
+  comfortableWithChildren: boolean | null;
+  comfortableWithPets: boolean | null;
+  halal: boolean | null;
+  allergies: string | null;
 }
 
 export async function fetchMatches(): Promise<MatchView[]> {

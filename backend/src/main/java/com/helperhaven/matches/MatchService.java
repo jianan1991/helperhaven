@@ -3,8 +3,10 @@ package com.helperhaven.matches;
 import com.helperhaven.domain.EmployerProfile;
 import com.helperhaven.domain.HelperProfile;
 import com.helperhaven.domain.User;
+import com.helperhaven.domain.enums.ConversationStatus;
 import com.helperhaven.domain.enums.UserRole;
 import com.helperhaven.matches.dto.MatchView;
+import com.helperhaven.repo.ConversationRepository;
 import com.helperhaven.repo.EmployerProfileRepository;
 import com.helperhaven.repo.HelperProfileRepository;
 import com.helperhaven.repo.UserRepository;
@@ -17,6 +19,7 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -40,17 +43,20 @@ public class MatchService {
     private final UserRepository users;
     private final EmployerProfileRepository employers;
     private final HelperProfileRepository helpers;
+    private final ConversationRepository conversations;
     private final FileStorage storage;
 
     public MatchService(
             UserRepository users,
             EmployerProfileRepository employers,
             HelperProfileRepository helpers,
+            ConversationRepository conversations,
             FileStorage storage
     ) {
         this.users = users;
         this.employers = employers;
         this.helpers = helpers;
+        this.conversations = conversations;
         this.storage = storage;
     }
 
@@ -79,7 +85,7 @@ public class MatchService {
                 emp.getWeightCooking(), emp.getWeightHouse(), emp.getWeightAttitude());
 
         return helpers.findAllScored().stream()
-                .map(h -> toEmployerView(h, w))
+                .map(h -> toEmployerView(h, w, employerId))
                 .sorted(Comparator.comparingDouble(MatchView::score).reversed())
                 .limit(MATCH_LIMIT)
                 .toList();
@@ -105,10 +111,13 @@ public class MatchService {
                 .toList();
     }
 
-    private MatchView toEmployerView(HelperProfile h, int[] employerWeights) {
+    private MatchView toEmployerView(HelperProfile h, int[] employerWeights, UUID employerId) {
         int[] hs = vec(h.getScoreInfant(), h.getScoreElderly(),
                 h.getScoreCooking(), h.getScoreHouse(), h.getScoreAttitude());
         double score = dotPercent(employerWeights, hs);
+        boolean unlocked = conversations
+                .findOpenBetween(employerId, h.getUserId(), ConversationStatus.OPEN)
+                .isPresent();
         return new MatchView(
                 h.getUserId(),
                 h.getDisplayFirstName(),
@@ -118,7 +127,13 @@ public class MatchService {
                 h.getBio(),
                 signedPhoto(h.getPhotoUrl()),
                 round1(score),
-                top3Reasons(employerWeights, hs)
+                top3Reasons(employerWeights, hs),
+                toScoreMap(hs),
+                unlocked,
+                unlocked ? Boolean.TRUE.equals(h.getComfortableWithChildren()) : null,
+                unlocked ? Boolean.TRUE.equals(h.getComfortableWithPets()) : null,
+                unlocked ? Boolean.TRUE.equals(h.getHalal()) : null,
+                unlocked ? h.getAllergies() : null
         );
     }
 
@@ -135,7 +150,9 @@ public class MatchService {
                 e.getHiringPurpose(),
                 null,
                 round1(score),
-                top3Reasons(helperScores, ew)
+                top3Reasons(helperScores, ew),
+                toScoreMap(ew),
+                false, null, null, null, null
         );
     }
 
@@ -163,6 +180,16 @@ public class MatchService {
         Integer[] idx = { 0, 1, 2, 3, 4 };
         java.util.Arrays.sort(idx, (a, b) -> Integer.compare(weights[b] * scores[b], weights[a] * scores[a]));
         return List.of(keys[idx[0]], keys[idx[1]], keys[idx[2]]);
+    }
+
+    private static Map<String, Integer> toScoreMap(int[] v) {
+        return Map.of(
+                "infant",  v[0],
+                "elderly", v[1],
+                "cooking", v[2],
+                "house",   v[3],
+                "attitude",v[4]
+        );
     }
 
     private static double round1(double v) {

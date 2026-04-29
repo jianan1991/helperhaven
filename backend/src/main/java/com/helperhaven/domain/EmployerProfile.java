@@ -2,6 +2,7 @@ package com.helperhaven.domain;
 
 import com.helperhaven.domain.enums.HousingType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -12,18 +13,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
 
-/**
- * Employer profile — keyed by {@code user_id} (1:1 with the {@link User}). The
- * five-vector preference weights ({@code weight_*}) live here as named columns
- * mirroring the helper's score columns. Both 5-vectors form the inputs to the
- * Sprint A match-score dot-product.
- */
 @Entity
 @Table(name = "employer_profiles")
 @Getter
@@ -53,8 +46,7 @@ public class EmployerProfile {
     private Boolean hasPets;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(nullable = false, columnDefinition = "housing_type")
+    @Column(nullable = false)
     private HousingType housing;
 
     private String district;
@@ -68,14 +60,16 @@ public class EmployerProfile {
     @Column(name = "off_day_policy")
     private String offDayPolicy;
 
-    @Column(name = "hiring_purpose", columnDefinition = "text")
+    @Column(name = "preferred_language")
+    private String preferredLanguage;
+
+    @Column(name = "hiring_purpose")
     private String hiringPurpose;
 
-    @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "purpose_tags", columnDefinition = "text[]")
+    @Convert(converter = StringArrayConverter.class)
+    @Column(name = "purpose_tags")
     private String[] purposeTags;
 
-    // 5-metric weight vector — sum-to-100 enforced at service layer.
     @Column(name = "weight_infant")
     private Short weightInfant;
 

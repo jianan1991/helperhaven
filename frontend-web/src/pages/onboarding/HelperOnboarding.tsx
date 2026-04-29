@@ -47,6 +47,10 @@ interface FormState {
   yearsExperience: string; // free-text -> int on submit
   bio: string;
   willingLiveIn: boolean;
+  comfortableWithChildren: boolean;
+  comfortableWithPets: boolean;
+  halal: boolean;
+  allergies: string;
   expectedSalarySgd: string;
   availableFrom: string;
   currentLocation: string;
@@ -64,6 +68,10 @@ const EMPTY: FormState = {
   yearsExperience: '',
   bio: '',
   willingLiveIn: true,
+  comfortableWithChildren: true,
+  comfortableWithPets: false,
+  halal: false,
+  allergies: '',
   expectedSalarySgd: '',
   availableFrom: '',
   currentLocation: '',
@@ -214,6 +222,10 @@ export default function HelperOnboarding() {
         heightCm: null,
         weightKg: null,
         willingLiveIn: form.willingLiveIn,
+        comfortableWithChildren: form.comfortableWithChildren,
+        comfortableWithPets: form.comfortableWithPets,
+        halal: form.halal,
+        allergies: form.allergies.trim() || null,
         expectedSalarySgd: form.expectedSalarySgd ? Number(form.expectedSalarySgd) : null,
         availableFrom: form.availableFrom || null,
         currentLocation: form.currentLocation.trim() || null,
@@ -533,6 +545,41 @@ function Step5({
         </div>
       </WizardField>
 
+      <WizardField label="Household preferences" hint="Families see this — be honest so you find the right fit">
+        <div className="grid grid-cols-3 gap-2">
+          {(
+            [
+              { key: 'comfortableWithChildren', label: 'OK with children' },
+              { key: 'comfortableWithPets',     label: 'OK with pets' },
+              { key: 'halal',                   label: 'Halal' },
+            ] as const
+          ).map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => update(key, !form[key])}
+              aria-pressed={form[key]}
+              className={`rounded-2xl px-3 py-2.5 border text-sm transition-colors ${
+                form[key]
+                  ? 'bg-sage-50 border-sage-400 ring-2 ring-sage-400/30 text-sage-900'
+                  : 'bg-white border-cream-200 hover:border-sage-400/60 text-ink-900'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </WizardField>
+
+      <WizardField label="Allergies" hint="Optional — e.g. cats, nuts, shellfish">
+        <input
+          value={form.allergies}
+          onChange={(e) => update('allergies', e.target.value)}
+          placeholder="e.g. Allergic to cats and dogs"
+          className={inputCls()}
+        />
+      </WizardField>
+
       <div className="grid grid-cols-2 gap-3">
         <WizardField label="Expected salary (SGD/mo)">
           <input
@@ -569,6 +616,10 @@ function toFormState(p: HelperProfile): FormState {
     yearsExperience: String(p.yearsExperience ?? 0),
     bio: p.bio ?? '',
     willingLiveIn: p.willingLiveIn,
+    comfortableWithChildren: p.comfortableWithChildren,
+    comfortableWithPets: p.comfortableWithPets,
+    halal: p.halal,
+    allergies: p.allergies ?? '',
     expectedSalarySgd: p.expectedSalarySgd != null ? String(p.expectedSalarySgd) : '',
     availableFrom: p.availableFrom ?? '',
     currentLocation: p.currentLocation ?? '',

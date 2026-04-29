@@ -12,20 +12,11 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
-/**
- * Helper profile — keyed by {@code user_id} (1:1 with the {@link User}). The
- * five-vector skill scores ({@code score_*}) live here as named columns so the
- * matching dot-product is a trivial query rather than a join through
- * {@code helper_skills}. The detailed per-skill ratings in {@code helper_skills}
- * stay for richer filtering in later sprints.
- */
 @Entity
 @Table(name = "helper_profiles")
 @Getter
@@ -46,8 +37,7 @@ public class HelperProfile {
     private String fullName;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(nullable = false, columnDefinition = "nationality_t")
+    @Column(nullable = false)
     private Nationality nationality;
 
     @Column(name = "date_of_birth", nullable = false)
@@ -63,7 +53,6 @@ public class HelperProfile {
 
     private String education;
 
-    @Column(columnDefinition = "text")
     private String bio;
 
     @Column(name = "height_cm")
@@ -74,6 +63,18 @@ public class HelperProfile {
 
     @Column(name = "willing_live_in", nullable = false)
     private Boolean willingLiveIn;
+
+    @Column(name = "comfortable_with_children")
+    private Boolean comfortableWithChildren;
+
+    @Column(name = "comfortable_with_pets")
+    private Boolean comfortableWithPets;
+
+    @Column(name = "halal")
+    private Boolean halal;
+
+    @Column(name = "allergies", length = 500)
+    private String allergies;
 
     @Column(name = "expected_salary_sgd")
     private Integer expectedSalarySgd;
@@ -87,7 +88,6 @@ public class HelperProfile {
     @Column(name = "photo_url")
     private String photoUrl;
 
-    // 5-vector skill scores — sum-to-100 enforced at service layer.
     @Column(name = "score_infant")
     private Short scoreInfant;
 

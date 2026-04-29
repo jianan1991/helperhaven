@@ -9,9 +9,9 @@ import ProfilePage from './pages/ProfilePage';
 import MatchesPage from './pages/MatchesPage';
 import MatchDetailPage from './pages/MatchDetailPage';
 import ChatsPage from './pages/ChatsPage';
-import ChatPage from './pages/ChatPage';
 import MyReviewsPage from './pages/MyReviewsPage';
 import WriteReviewPage from './pages/WriteReviewPage';
+import PricingPage from './pages/PricingPage';
 import { useAuthStore } from './lib/auth';
 
 /**
@@ -35,12 +35,13 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/health" element={<HealthPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
 
         {/* Authenticated app routes. */}
         <Route path="/matches" element={<RequireAuth><MatchesPage /></RequireAuth>} />
         <Route path="/matches/:id" element={<RequireAuth><MatchDetailPage /></RequireAuth>} />
         <Route path="/chats" element={<RequireAuth><ChatsPage /></RequireAuth>} />
-        <Route path="/chats/:id" element={<RequireAuth><ChatPage /></RequireAuth>} />
+        <Route path="/chats/:id" element={<RequireAuth><ChatsPage /></RequireAuth>} />
         <Route path="/reviews/me" element={<RequireAuth><MyReviewsPage /></RequireAuth>} />
         <Route path="/reviews/write/:id" element={<RequireAuth><WriteReviewPage /></RequireAuth>} />
         <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />

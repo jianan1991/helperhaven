@@ -107,6 +107,10 @@ public class ProfileService {
         p.setHeightCm(req.heightCm() == null ? null : (short) req.heightCm().intValue());
         p.setWeightKg(req.weightKg() == null ? null : (short) req.weightKg().intValue());
         p.setWillingLiveIn(req.willingLiveIn());
+        p.setComfortableWithChildren(Boolean.TRUE.equals(req.comfortableWithChildren()));
+        p.setComfortableWithPets(Boolean.TRUE.equals(req.comfortableWithPets()));
+        p.setHalal(Boolean.TRUE.equals(req.halal()));
+        p.setAllergies(req.allergies());
         p.setExpectedSalarySgd(req.expectedSalarySgd());
         p.setAvailableFrom(req.availableFrom());
         p.setCurrentLocation(req.currentLocation());
@@ -166,6 +170,7 @@ public class ProfileService {
         p.setSalaryOfferSgdMin(req.salaryOfferSgdMin());
         p.setSalaryOfferSgdMax(req.salaryOfferSgdMax());
         p.setOffDayPolicy(req.offDayPolicy());
+        p.setPreferredLanguage(req.preferredLanguage());
         p.setHiringPurpose(req.hiringPurpose());
         p.setPurposeTags(req.purposeTags() == null ? new String[0] : req.purposeTags().toArray(String[]::new));
         p.setWeightInfant((short) req.weights().infant().intValue());
