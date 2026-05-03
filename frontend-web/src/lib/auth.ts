@@ -46,7 +46,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       accessToken: null,
       refreshToken: null,
-      hydrated: false,
+      hydrated: true,
       setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
       setUser: (user) => set({ user }),
 
@@ -87,9 +87,7 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: s.refreshToken,
         user: s.user,
       }),
-      onRehydrateStorage: () => (state) => {
-        state?.setUser(state.user);
-        // Mark hydrated so guarded routes know it's safe to read tokens.
+      onRehydrateStorage: () => () => {
         useAuthStore.setState({ hydrated: true });
       },
     }

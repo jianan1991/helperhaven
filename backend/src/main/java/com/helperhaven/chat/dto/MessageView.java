@@ -7,6 +7,8 @@ public record MessageView(
         UUID id,
         UUID conversationId,
         UUID senderUserId,
+        String senderRole,
+        String senderDisplayName,
         String body,
         Instant sentAt,
         Instant readAt

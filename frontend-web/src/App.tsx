@@ -1,5 +1,5 @@
 import { Route, Routes, Navigate, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import Layout from './components/Layout';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -11,16 +11,29 @@ import MatchDetailPage from './pages/MatchDetailPage';
 import ChatsPage from './pages/ChatsPage';
 import MyReviewsPage from './pages/MyReviewsPage';
 import WriteReviewPage from './pages/WriteReviewPage';
+import ManageHelperPage from './pages/ManageHelperPage';
 import PricingPage from './pages/PricingPage';
+import AdminServicesPage from './pages/AdminServicesPage';
+import AdminOverviewPage from './pages/AdminOverviewPage';
+import AdminManagePlacementsPage from './pages/AdminManagePlacementsPage';
 import { useAuthStore } from './lib/auth';
+import { listConversations } from './lib/chat';
+import { useToastStore } from './lib/toasts';
 
 /**
  * Top-level routing. Marketing routes (/, /login, /signup) are public; everything
  * else requires a hydrated auth token. We re-fetch /auth/me after rehydration so
  * a stale token doesn't render an authenticated UI for a deleted user.
  */
+const CONV_POLL_MS = 10_000;
+
 export default function App() {
   const { hydrated, accessToken, fetchMe } = useAuthStore();
+  const loc = useLocation();
+  const { push: pushToast, setTotalUnread } = useToastStore();
+  const prevUnread = useRef<Record<string, number>>({});
+  const pathnameRef = useRef(loc.pathname);
+  pathnameRef.current = loc.pathname;
 
   useEffect(() => {
     if (hydrated && accessToken) {
@@ -28,10 +41,50 @@ export default function App() {
     }
   }, [hydrated, accessToken, fetchMe]);
 
+  // Global conversation polling — updates nav badge and fires toasts when not on /chats.
+  // Uses pathnameRef so the interval doesn't restart on every navigation.
+  useEffect(() => {
+    if (!accessToken) return;
+    let cancelled = false;
+    // bootstrapped = true after the first successful fetch so we don't toast
+    // for messages that were already unread when the user opened the app.
+    let bootstrapped = false;
+
+    const tick = async () => {
+      try {
+        const convs = await listConversations();
+        if (cancelled) return;
+        setTotalUnread(convs.reduce((sum, c) => sum + c.unreadCount, 0));
+        const onChatsPage = pathnameRef.current.startsWith('/chats');
+        convs.forEach((c) => {
+          const prev = prevUnread.current[c.id] ?? 0;
+          if (bootstrapped && c.unreadCount > prev && !onChatsPage) {
+            pushToast(
+              `New message from ${c.counterpartyDisplayName}`,
+              `/chats/${c.counterpartyUserId}`,
+            );
+          }
+          prevUnread.current[c.id] = c.unreadCount;
+        });
+        bootstrapped = true;
+      } catch (err: unknown) {
+        if (
+          typeof err === 'object' && err !== null && 'response' in err &&
+          (err as { response?: { status?: number } }).response?.status === 401
+        ) {
+          useAuthStore.getState().signOut();
+        }
+      }
+    };
+    tick();
+    const h = setInterval(tick, CONV_POLL_MS);
+    return () => { cancelled = true; clearInterval(h); };
+  }, [accessToken, pushToast, setTotalUnread]);
+
   return (
     <Layout>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<PublicHome />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/health" element={<HealthPage />} />
@@ -44,7 +97,11 @@ export default function App() {
         <Route path="/chats/:id" element={<RequireAuth><ChatsPage /></RequireAuth>} />
         <Route path="/reviews/me" element={<RequireAuth><MyReviewsPage /></RequireAuth>} />
         <Route path="/reviews/write/:id" element={<RequireAuth><WriteReviewPage /></RequireAuth>} />
+        <Route path="/manage" element={<RequireAuth><ManageHelperPage /></RequireAuth>} />
         <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
+        <Route path="/admin/services" element={<RequireAuth><AdminServicesPage /></RequireAuth>} />
+        <Route path="/admin/overview" element={<RequireAuth><AdminOverviewPage /></RequireAuth>} />
+        <Route path="/admin/placements" element={<RequireAuth><AdminManagePlacementsPage /></RequireAuth>} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>
@@ -68,6 +125,14 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
     return <Navigate to={`/login?next=${encodeURIComponent(loc.pathname)}`} replace />;
   }
   return <>{children}</>;
+}
+
+function PublicHome() {
+  const { hydrated, accessToken, user } = useAuthStore();
+  if (hydrated && accessToken) {
+    return <Navigate to={user?.role === 'ADMIN' ? '/admin/overview' : '/matches'} replace />;
+  }
+  return <LandingPage />;
 }
 
 function NotFound() {

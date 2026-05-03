@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { HelperHavenWordmark } from './Logo';
 import { useAuthStore } from '../lib/auth';
+import { useToastStore } from '../lib/toasts';
+import ToastStack from './ToastStack';
 
 /**
  * Top-level app shell. Responsive nav: full menu on md+, hamburger drawer on mobile.
@@ -11,6 +13,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const { user, signOut } = useAuthStore();
   const loc = useLocation();
+  const totalUnread = useToastStore((s) => s.totalUnread);
 
   // Public marketing pages get the layout's brand bar but no app nav links.
   const isMarketing = ['/', '/login', '/signup'].includes(loc.pathname);
@@ -34,9 +37,34 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </>
             ) : (
               <>
-                <NavLink to="/matches" className={navLinkCls}>Matches</NavLink>
-                <NavLink to="/chats" className={navLinkCls}>Chats</NavLink>
+                {user?.role !== 'ADMIN' && (
+                  <NavLink to="/matches" className={navLinkCls}>Matches</NavLink>
+                )}
+                {user?.role !== 'ADMIN' && (
+                  <NavLink to="/chats" className={navLinkCls}>
+                    {({ isActive }) => (
+                      <span className="relative">
+                        Chats
+                        {totalUnread > 0 && !isActive && (
+                          <span className="absolute -top-2 -right-3 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-clay-500 text-white text-[9px] font-bold px-1">
+                            {totalUnread > 9 ? '9+' : totalUnread}
+                          </span>
+                        )}
+                      </span>
+                    )}
+                  </NavLink>
+                )}
+                {user?.role !== 'ADMIN' && (
+                  <NavLink to="/manage" className={navLinkCls}>{user?.role === 'HELPER' ? 'Manage Employment' : 'Manage Helper'}</NavLink>
+                )}
                 <NavLink to="/profile" className={navLinkCls}>My profile</NavLink>
+                {user?.role === 'ADMIN' && (
+                  <>
+                    <NavLink to="/admin/overview" className={navLinkCls}>Overview</NavLink>
+                    <NavLink to="/admin/placements" className={navLinkCls}>Manage Placements</NavLink>
+                    <NavLink to="/admin/services" className={navLinkCls}>Services</NavLink>
+                  </>
+                )}
               </>
             )}
           </nav>
@@ -106,9 +134,30 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </>
               ) : (
                 <>
-                  <NavLink to="/matches" onClick={() => setOpen(false)} className="py-3 px-2 rounded-lg hover:bg-cream-200">Matches</NavLink>
-                  <NavLink to="/chats" onClick={() => setOpen(false)} className="py-3 px-2 rounded-lg hover:bg-cream-200">Chats</NavLink>
+                  {user?.role !== 'ADMIN' && (
+                    <NavLink to="/matches" onClick={() => setOpen(false)} className="py-3 px-2 rounded-lg hover:bg-cream-200">Matches</NavLink>
+                  )}
+                  {user?.role !== 'ADMIN' && (
+                    <NavLink to="/chats" onClick={() => setOpen(false)} className="py-3 px-2 rounded-lg hover:bg-cream-200 flex items-center gap-2">
+                      Chats
+                      {totalUnread > 0 && (
+                        <span className="min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-clay-500 text-white text-[9px] font-bold px-1">
+                          {totalUnread > 9 ? '9+' : totalUnread}
+                        </span>
+                      )}
+                    </NavLink>
+                  )}
+                  {user?.role !== 'ADMIN' && (
+                    <NavLink to="/manage" onClick={() => setOpen(false)} className="py-3 px-2 rounded-lg hover:bg-cream-200">{user?.role === 'HELPER' ? 'Manage Employment' : 'Manage Helper'}</NavLink>
+                  )}
                   <NavLink to="/profile" onClick={() => setOpen(false)} className="py-3 px-2 rounded-lg hover:bg-cream-200">My profile</NavLink>
+                  {user?.role === 'ADMIN' && (
+                    <>
+                      <NavLink to="/admin/overview" onClick={() => setOpen(false)} className="py-3 px-2 rounded-lg hover:bg-cream-200">Overview</NavLink>
+                      <NavLink to="/admin/placements" onClick={() => setOpen(false)} className="py-3 px-2 rounded-lg hover:bg-cream-200">Manage Placements</NavLink>
+                      <NavLink to="/admin/services" onClick={() => setOpen(false)} className="py-3 px-2 rounded-lg hover:bg-cream-200">Services</NavLink>
+                    </>
+                  )}
                 </>
               )}
               <div className="border-t border-cream-200 mt-2 pt-3 flex flex-col gap-2">
@@ -147,6 +196,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </header>
 
       <main className="flex-1 w-full">{children}</main>
+      <ToastStack />
 
       <footer className="border-t border-cream-200 bg-cream-50 mt-12">
         <div className="max-w-6xl mx-auto px-4 md:px-6 py-8 md:py-10 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 text-sm">

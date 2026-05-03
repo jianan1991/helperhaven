@@ -28,7 +28,6 @@ case "$cmd" in
         echo "  Admin:      http://localhost:5174"
         echo "  Backend:    http://localhost:8080/api/hello"
         echo "  Swagger:    http://localhost:8080/swagger-ui.html"
-        echo "  MinIO UI:   http://localhost:9001  (minioadmin / minioadmin)"
         echo "  MailHog:    http://localhost:8025"
         echo "  Postgres:   localhost:5432 (helperhaven/helperhaven)"
         ;;

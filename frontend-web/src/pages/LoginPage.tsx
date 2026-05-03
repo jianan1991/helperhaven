@@ -21,6 +21,7 @@ export default function LoginPage() {
   const nav = useNavigate();
   const [params] = useSearchParams();
   const next = params.get('next') ?? '/matches';
+  const reason = params.get('reason');
   const signIn = useAuthStore((s) => s.signIn);
 
   const {
@@ -44,8 +45,9 @@ export default function LoginPage() {
       return;
     }
     try {
-      await signIn(parsed.data.email, parsed.data.password);
-      nav(next, { replace: true });
+      const user = await signIn(parsed.data.email, parsed.data.password);
+      const destination = next !== '/matches' ? next : user.role === 'ADMIN' ? '/health' : '/matches';
+      nav(destination, { replace: true });
     } catch (err) {
       setServerError(asMessage(err, 'Sign-in failed. Check your credentials and try again.'));
     }
@@ -63,6 +65,12 @@ export default function LoginPage() {
             Pick up where you left off.
           </p>
         </div>
+
+        {reason === 'wrong-account' && (
+          <div className="mb-5 rounded-2xl bg-clay-500/10 border border-clay-500/30 text-clay-700 text-sm px-4 py-3">
+            You were signed out because your account type doesn't match. Please sign in with a helper account to continue.
+          </div>
+        )}
 
         <form
           onSubmit={handleSubmit(onSubmit)}

@@ -60,8 +60,9 @@ public class EmployerProfile {
     @Column(name = "off_day_policy")
     private String offDayPolicy;
 
-    @Column(name = "preferred_language")
-    private String preferredLanguage;
+    @Convert(converter = StringArrayConverter.class)
+    @Column(name = "preferred_languages")
+    private String[] preferredLanguages;
 
     @Column(name = "hiring_purpose")
     private String hiringPurpose;

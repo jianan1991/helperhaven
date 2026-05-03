@@ -12,18 +12,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
 
-/**
- * Lite mapping of {@code permit_cases} for Sprint A. The full concierge
- * workflow (documents, MOM submission, security bond, etc.) lands in later
- * sprints — Sprint A only needs to read the status to gate review publishing
- * and write a {@code CARD_ISSUED} row via the demo "mark as hired" endpoint.
- */
 @Entity
 @Table(name = "permit_cases")
 @Getter
@@ -46,8 +38,7 @@ public class PermitCase {
     private UUID matchId;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(nullable = false, columnDefinition = "permit_status")
+    @Column(nullable = false)
     private PermitStatus status;
 
     @Column(name = "created_at", nullable = false, updatable = false)

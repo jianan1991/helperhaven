@@ -1,5 +1,7 @@
 package com.helperhaven.profile.dto;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.helperhaven.domain.HelperLanguage;
 import com.helperhaven.domain.HelperProfile;
 import com.helperhaven.domain.enums.Nationality;
@@ -29,12 +31,16 @@ public record HelperProfileResponse(
         Integer expectedSalarySgd,
         LocalDate availableFrom,
         String currentLocation,
+        String offDayPolicy,
         String photoUrl,
         FiveVector skills,
         List<LanguageProficiency> languages,
         boolean availableForTransfer,
-        LocalDate transferAvailableFrom
+        LocalDate transferAvailableFrom,
+        List<WorkEntryDto> workHistory
 ) {
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
     public record LanguageProficiency(Short languageId, Short proficiency) {}
 
     /**
@@ -48,8 +54,9 @@ public record HelperProfileResponse(
                 yearsExperience, religion, maritalStatus, education, bio,
                 heightCm, weightKg, willingLiveIn,
                 comfortableWithChildren, comfortableWithPets, halal, allergies,
-                expectedSalarySgd, availableFrom, currentLocation, newPhotoUrl,
-                skills, languages, availableForTransfer, transferAvailableFrom
+                expectedSalarySgd, availableFrom, currentLocation, offDayPolicy, newPhotoUrl,
+                skills, languages, availableForTransfer, transferAvailableFrom,
+                workHistory
         );
     }
 
@@ -75,6 +82,7 @@ public record HelperProfileResponse(
                 p.getExpectedSalarySgd(),
                 p.getAvailableFrom(),
                 p.getCurrentLocation(),
+                p.getOffDayPolicy(),
                 p.getPhotoUrl(),
                 new FiveVector(
                         nz(p.getScoreInfant()),
@@ -87,8 +95,18 @@ public record HelperProfileResponse(
                         .map(l -> new LanguageProficiency(l.getId().getLanguageId(), l.getProficiency()))
                         .toList(),
                 Boolean.TRUE.equals(p.getAvailableForTransfer()),
-                p.getTransferAvailableFrom()
+                p.getTransferAvailableFrom(),
+                parseWorkHistory(p.getWorkHistory())
         );
+    }
+
+    private static List<WorkEntryDto> parseWorkHistory(String json) {
+        if (json == null || json.isBlank()) return List.of();
+        try {
+            return MAPPER.readValue(json, new TypeReference<>() {});
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
     private static int nz(Short s) { return s == null ? 0 : s.intValue(); }

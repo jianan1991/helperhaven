@@ -85,6 +85,9 @@ public class HelperProfile {
     @Column(name = "current_location")
     private String currentLocation;
 
+    @Column(name = "off_day_policy", length = 500)
+    private String offDayPolicy;
+
     @Column(name = "photo_url")
     private String photoUrl;
 
@@ -114,6 +117,10 @@ public class HelperProfile {
 
     @Column(name = "current_employer_user_id")
     private UUID currentEmployerUserId;
+
+    @Builder.Default
+    @Column(name = "work_history", nullable = false, columnDefinition = "text")
+    private String workHistory = "[]";
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

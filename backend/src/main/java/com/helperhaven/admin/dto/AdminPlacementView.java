@@ -1,0 +1,22 @@
+package com.helperhaven.admin.dto;
+
+import com.helperhaven.placement.dto.SelectedServiceView;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+public record AdminPlacementView(
+        UUID id,
+        UUID employerId,
+        String employerEmail,
+        String employerName,
+        UUID helperId,
+        String helperEmail,
+        String helperName,
+        String engagementMode,
+        String status,
+        Instant createdAt,
+        Instant updatedAt,
+        List<SelectedServiceView> selectedServices
+) {}

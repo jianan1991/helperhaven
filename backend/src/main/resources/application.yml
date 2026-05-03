@@ -14,7 +14,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     properties:
       hibernate:
         jdbc:
@@ -22,15 +22,6 @@ spring:
         format_sql: false
     open-in-view: false
 
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
-    baseline-on-migrate: true
-
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
 
   mail:
     host: ${SMTP_HOST:localhost}
@@ -71,13 +62,13 @@ helperhaven:
       access-token-ttl: PT15M
       refresh-token-ttl: P30D
   storage:
-    provider: ${STORAGE_PROVIDER:s3}
+    provider: ${STORAGE_PROVIDER:local}
     bucket: ${STORAGE_BUCKET:helperhaven-dev}
     region: ${STORAGE_REGION:ap-southeast-1}
-    endpoint: ${STORAGE_ENDPOINT:http://localhost:9000}
-    access-key: ${STORAGE_ACCESS_KEY:minioadmin}
-    secret-key: ${STORAGE_SECRET_KEY:minioadmin}
-    path-style-access: ${STORAGE_PATH_STYLE:true}
+    endpoint: ${STORAGE_ENDPOINT:}
+    access-key: ${STORAGE_ACCESS_KEY:}
+    secret-key: ${STORAGE_SECRET_KEY:}
+    path-style-access: ${STORAGE_PATH_STYLE:false}
   stripe:
     secret-key: ${STRIPE_SECRET_KEY:sk_test_stub}
     webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_stub}

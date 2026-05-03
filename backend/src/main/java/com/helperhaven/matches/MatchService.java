@@ -1,13 +1,19 @@
 package com.helperhaven.matches;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.helperhaven.domain.EmployerProfile;
+import com.helperhaven.domain.HelperInterest;
 import com.helperhaven.domain.HelperProfile;
 import com.helperhaven.domain.User;
 import com.helperhaven.domain.enums.ConversationStatus;
 import com.helperhaven.domain.enums.UserRole;
+import com.helperhaven.domain.enums.UserStatus;
 import com.helperhaven.matches.dto.MatchView;
+import com.helperhaven.profile.dto.WorkEntryDto;
 import com.helperhaven.repo.ConversationRepository;
 import com.helperhaven.repo.EmployerProfileRepository;
+import com.helperhaven.repo.HelperInterestRepository;
 import com.helperhaven.repo.HelperProfileRepository;
 import com.helperhaven.repo.UserRepository;
 import com.helperhaven.storage.FileStorage;
@@ -15,49 +21,47 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
-/**
- * Sprint A matching: dot product of the employer's weight vector against each
- * helper's score vector. Both vectors sum to 100, so the raw dot product lives
- * in [0, 10000]; we divide by 100 to surface a 0-100 percentage.
- *
- * <p>Why a dot product rather than something fancier? It captures "did the
- * employer's priorities line up with the helper's strengths" with one cheap
- * arithmetic step, which is exactly the demo we need to ship. Sprint B layers
- * cohort fit (age, languages, location) on top.
- */
 @Service
 public class MatchService {
 
     private static final Duration PHOTO_GET_TTL = Duration.ofHours(1);
+    private static final Duration INTEREST_TTL = Duration.ofDays(7);
 
-    /** Cap the list size so we don't ship a huge payload during the demo. */
     private static final int MATCH_LIMIT = 50;
 
     private final UserRepository users;
     private final EmployerProfileRepository employers;
     private final HelperProfileRepository helpers;
     private final ConversationRepository conversations;
+    private final HelperInterestRepository interests;
     private final FileStorage storage;
+    private final ObjectMapper objectMapper;
 
     public MatchService(
             UserRepository users,
             EmployerProfileRepository employers,
             HelperProfileRepository helpers,
             ConversationRepository conversations,
-            FileStorage storage
+            HelperInterestRepository interests,
+            FileStorage storage,
+            ObjectMapper objectMapper
     ) {
         this.users = users;
         this.employers = employers;
         this.helpers = helpers;
         this.conversations = conversations;
+        this.interests = interests;
         this.storage = storage;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional(readOnly = true)
@@ -84,8 +88,17 @@ public class MatchService {
         int[] w = vec(emp.getWeightInfant(), emp.getWeightElderly(),
                 emp.getWeightCooking(), emp.getWeightHouse(), emp.getWeightAttitude());
 
+        Instant cutoff = Instant.now().minus(INTEREST_TTL);
+        // Map helperId → expiresAt for all helpers who raised their hand for this employer.
+        Map<UUID, Instant> interestedHelpers = interests
+                .findByEmployerIdAndExpressedAtAfter(employerId, cutoff)
+                .stream()
+                .collect(Collectors.toMap(HelperInterest::getHelperId,
+                        i -> i.getExpressedAt().plus(INTEREST_TTL)));
+
         return helpers.findAllScored().stream()
-                .map(h -> toEmployerView(h, w, employerId))
+                .filter(h -> isActive(h.getUserId()))
+                .map(h -> toEmployerView(h, w, employerId, interestedHelpers.get(h.getUserId())))
                 .sorted(Comparator.comparingDouble(MatchView::score).reversed())
                 .limit(MATCH_LIMIT)
                 .toList();
@@ -103,15 +116,25 @@ public class MatchService {
         int[] s = vec(h.getScoreInfant(), h.getScoreElderly(),
                 h.getScoreCooking(), h.getScoreHouse(), h.getScoreAttitude());
 
+        Instant cutoff = Instant.now().minus(INTEREST_TTL);
+        // Map employerId → expiresAt for all employers this helper raised their hand for.
+        Map<UUID, Instant> expressedTo = interests
+                .findByHelperIdAndExpressedAtAfter(helperId, cutoff)
+                .stream()
+                .collect(Collectors.toMap(HelperInterest::getEmployerId,
+                        i -> i.getExpressedAt().plus(INTEREST_TTL)));
+
         return employers.findAll().stream()
                 .filter(MatchService::hasFullWeights)
-                .map(e -> toHelperView(e, s))
+                .filter(e -> isActive(e.getUserId()))
+                .map(e -> toHelperView(e, s, expressedTo.get(e.getUserId())))
                 .sorted(Comparator.comparingDouble(MatchView::score).reversed())
                 .limit(MATCH_LIMIT)
                 .toList();
     }
 
-    private MatchView toEmployerView(HelperProfile h, int[] employerWeights, UUID employerId) {
+    // expiresAt is non-null only when this helper raised their hand for the employer.
+    private MatchView toEmployerView(HelperProfile h, int[] employerWeights, UUID employerId, Instant expiresAt) {
         int[] hs = vec(h.getScoreInfant(), h.getScoreElderly(),
                 h.getScoreCooking(), h.getScoreHouse(), h.getScoreAttitude());
         double score = dotPercent(employerWeights, hs);
@@ -124,20 +147,29 @@ public class MatchService {
                 String.valueOf(h.getNationality()),
                 ageOrNull(h.getDateOfBirth()),
                 h.getYearsExperience() == null ? null : h.getYearsExperience().intValue(),
-                h.getBio(),
+                h.getWillingLiveIn(),
+                h.getExpectedSalarySgd(),
+                h.getAvailableFrom(),
+                h.getCurrentLocation(),
+                parseWorkHistory(h.getWorkHistory()),
                 signedPhoto(h.getPhotoUrl()),
                 round1(score),
                 top3Reasons(employerWeights, hs),
                 toScoreMap(hs),
                 unlocked,
-                unlocked ? Boolean.TRUE.equals(h.getComfortableWithChildren()) : null,
-                unlocked ? Boolean.TRUE.equals(h.getComfortableWithPets()) : null,
-                unlocked ? Boolean.TRUE.equals(h.getHalal()) : null,
-                unlocked ? h.getAllergies() : null
+                expiresAt != null,
+                expiresAt,
+                h.getBio(),
+                Boolean.TRUE.equals(h.getComfortableWithChildren()),
+                Boolean.TRUE.equals(h.getComfortableWithPets()),
+                Boolean.TRUE.equals(h.getHalal()),
+                h.getAllergies(),
+                null, null, null, null, null, null, null, null, null, null
         );
     }
 
-    private MatchView toHelperView(EmployerProfile e, int[] helperScores) {
+    // expiresAt is non-null only when this helper has raised their hand for the employer.
+    private MatchView toHelperView(EmployerProfile e, int[] helperScores, Instant expiresAt) {
         int[] ew = vec(e.getWeightInfant(), e.getWeightElderly(),
                 e.getWeightCooking(), e.getWeightHouse(), e.getWeightAttitude());
         double score = dotPercent(ew, helperScores);
@@ -147,12 +179,26 @@ public class MatchService {
                 e.getHousing() == null ? null : e.getHousing().name(),
                 null,
                 null,
-                e.getHiringPurpose(),
+                null, null, null, null, null, // willingLiveIn, expectedSalarySgd, availableFrom, currentLocation, workHistory
                 null,
                 round1(score),
                 top3Reasons(helperScores, ew),
                 toScoreMap(ew),
-                false, null, null, null, null
+                false,
+                expiresAt != null,
+                expiresAt,
+                e.getHiringPurpose(),
+                null, null, null, null,
+                e.getHouseholdSize() == null ? null : e.getHouseholdSize().intValue(),
+                e.getNumChildren() == null ? null : e.getNumChildren().intValue(),
+                e.getNumElderly() == null ? null : e.getNumElderly().intValue(),
+                e.getHasPets(),
+                e.getDistrict(),
+                e.getSalaryOfferSgdMin(),
+                e.getSalaryOfferSgdMax(),
+                e.getOffDayPolicy(),
+                e.getPreferredLanguages() == null ? List.of() : List.of(e.getPreferredLanguages()),
+                e.getPurposeTags() == null ? List.of() : List.of(e.getPurposeTags())
         );
     }
 
@@ -167,14 +213,9 @@ public class MatchService {
     private static double dotPercent(int[] x, int[] y) {
         long sum = 0;
         for (int i = 0; i < 5; i++) sum += (long) x[i] * y[i];
-        return sum / 100.0; // both vectors sum to 100, so range is [0, 10000] -> divide by 100
+        return sum / 100.0;
     }
 
-    /**
-     * The three skill keys that contributed the most to the score (i.e. where
-     * weight*score is highest). Used by the UI to say "matched on cooking,
-     * elderly care, attitude" without dumping the whole vector.
-     */
     private static List<String> top3Reasons(int[] weights, int[] scores) {
         String[] keys = { "infant", "elderly", "cooking", "house", "attitude" };
         Integer[] idx = { 0, 1, 2, 3, 4 };
@@ -215,6 +256,21 @@ public class MatchService {
                 && e.getWeightCooking() != null
                 && e.getWeightHouse() != null
                 && e.getWeightAttitude() != null;
+    }
+
+    private List<WorkEntryDto> parseWorkHistory(String json) {
+        if (json == null || json.isBlank() || json.equals("[]")) return List.of();
+        try {
+            return objectMapper.readValue(json, new TypeReference<>() {});
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+
+    private boolean isActive(UUID userId) {
+        return users.findById(userId)
+                .map(u -> u.getStatus() == UserStatus.ACTIVE)
+                .orElse(false);
     }
 
     private String signedPhoto(String keyOrUrl) {

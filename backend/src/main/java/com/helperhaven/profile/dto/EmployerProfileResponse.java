@@ -18,7 +18,7 @@ public record EmployerProfileResponse(
         Integer salaryOfferSgdMin,
         Integer salaryOfferSgdMax,
         String offDayPolicy,
-        String preferredLanguage,
+        List<String> preferredLanguages,
         String hiringPurpose,
         List<String> purposeTags,
         FiveVector weights
@@ -36,7 +36,7 @@ public record EmployerProfileResponse(
                 p.getSalaryOfferSgdMin(),
                 p.getSalaryOfferSgdMax(),
                 p.getOffDayPolicy(),
-                p.getPreferredLanguage(),
+                p.getPreferredLanguages() == null ? List.of() : List.of(p.getPreferredLanguages()),
                 p.getHiringPurpose(),
                 p.getPurposeTags() == null ? List.of() : List.of(p.getPurposeTags()),
                 new FiveVector(

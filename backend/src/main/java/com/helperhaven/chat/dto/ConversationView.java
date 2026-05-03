@@ -13,6 +13,8 @@ public record ConversationView(
         UUID counterpartyUserId,
         String counterpartyDisplayName,
         String counterpartyPhotoUrl,
+        /** Non-null only when the viewer is an employer — revealed as soon as they open the chat. */
+        String counterpartyContact,
         Instant lastMessageAt,
         String lastMessagePreview,
         int unreadCount,

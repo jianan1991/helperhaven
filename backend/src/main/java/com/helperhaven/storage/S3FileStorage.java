@@ -1,6 +1,7 @@
 package com.helperhaven.storage;
 
 import com.helperhaven.config.AppProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -24,6 +25,7 @@ import java.time.Duration;
  * come from config.
  */
 @Component
+@ConditionalOnProperty(name = "helperhaven.storage.provider", havingValue = "s3")
 public class S3FileStorage implements FileStorage {
 
     private final AppProperties props;

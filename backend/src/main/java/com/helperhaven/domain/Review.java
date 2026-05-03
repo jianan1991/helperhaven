@@ -5,6 +5,7 @@ import com.helperhaven.domain.enums.ReviewContext;
 import com.helperhaven.domain.enums.ReviewKind;
 import com.helperhaven.domain.enums.ReviewVisibility;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -22,13 +23,6 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Combined V1 + V3 review row. Sprint A writes one EMPLOYER_ON_HELPER and one
- * HELPER_ON_EMPLOYER per permit case at most (enforced by V3's partial unique
- * index). The {@code skillBreakdown} JSON and {@code flagTags} array let the
- * employer give a structured answer about how the helper actually performed
- * once the placement is real.
- */
 @Entity
 @Table(name = "reviews")
 @Getter
@@ -48,8 +42,7 @@ public class Review {
     private UUID revieweeUserId;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(nullable = false, columnDefinition = "review_context")
+    @Column(nullable = false)
     private ReviewContext context;
 
     @Column(name = "reference_id")
@@ -62,32 +55,26 @@ public class Review {
     private String body;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(nullable = false, columnDefinition = "review_visibility")
+    @Column(nullable = false)
     private ReviewVisibility visibility;
 
-    // ---- V3 additions ----
-
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(columnDefinition = "review_kind")
+    @Column
     private ReviewKind kind;
 
     @Column(name = "permit_case_id")
     private UUID permitCaseId;
 
-    /** {"infant": 33, "elderly": 28, ...} — Hibernate Jackson handles JSONB conversion. */
-    @Column(name = "skill_breakdown", columnDefinition = "jsonb")
+    @Column(name = "skill_breakdown")
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Integer> skillBreakdown;
 
-    @Column(name = "flag_tags", columnDefinition = "text[]")
-    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Convert(converter = StringArrayConverter.class)
+    @Column(name = "flag_tags")
     private String[] flagTags;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "english_level", columnDefinition = "english_level")
+    @Column(name = "english_level")
     private EnglishLevel englishLevel;
 
     @Column(name = "months_into_contract")

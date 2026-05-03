@@ -1,6 +1,7 @@
 package com.helperhaven.config;
 
 import com.helperhaven.auth.JwtAuthFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -29,6 +30,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .headers(h -> h.frameOptions(f -> f.sameOrigin()))
                 .cors(cors -> {})
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
@@ -42,7 +44,9 @@ public class SecurityConfig {
                                 "/api/auth/login",
                                 "/api/auth/refresh",
                                 "/api/webhooks/**",
-                                "/api/hello"
+                                "/api/hello",
+                                "/api/local-storage/**",
+                                "/h2-console/**"
                         ).permitAll()
                         // /api/auth/me and any future /api/auth/* (e.g. /logout, /change-password)
                         // require a valid access token.
@@ -51,7 +55,14 @@ public class SecurityConfig {
                 )
                 // Read the bearer token before Spring's username/password filter so the
                 // SecurityContext is populated by the time auth rules above are evaluated.
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                // Without an explicit entry point, Spring Security falls back to 403 for
+                // unauthenticated requests on stateless apps. Return 401 instead so the
+                // frontend's refresh interceptor can fire.
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, e) ->
+                                res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorised"))
+                );
         return http.build();
     }
 }

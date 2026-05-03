@@ -35,10 +35,11 @@ public record HelperProfileRequest(
         Integer expectedSalarySgd,
         LocalDate availableFrom,
         String currentLocation,
+        String offDayPolicy,
         String photoUrl,
         @NotNull @Valid FiveVector skills,
-        /** ISO codes of languages the helper speaks (mapped via Language.iso_code). */
-        List<HelperLanguageEntry> languages
+        List<HelperLanguageEntry> languages,
+        List<WorkEntryDto> workHistory
 ) {
     public record HelperLanguageEntry(@NotNull Short languageId, @NotNull Short proficiency) {}
 }

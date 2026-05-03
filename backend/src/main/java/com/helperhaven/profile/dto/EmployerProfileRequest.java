@@ -20,7 +20,7 @@ public record EmployerProfileRequest(
         Integer salaryOfferSgdMin,
         Integer salaryOfferSgdMax,
         String offDayPolicy,
-        String preferredLanguage,
+        List<String> preferredLanguages,
         String hiringPurpose,
         List<String> purposeTags,
         @NotNull @Valid FiveVector weights

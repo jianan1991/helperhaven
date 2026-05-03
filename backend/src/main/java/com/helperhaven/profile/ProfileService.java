@@ -1,5 +1,6 @@
 package com.helperhaven.profile;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.helperhaven.domain.EmployerProfile;
 import com.helperhaven.domain.HelperLanguage;
 import com.helperhaven.domain.HelperProfile;
@@ -49,19 +50,22 @@ public class ProfileService {
     private final EmployerProfileRepository employers;
     private final HelperLanguageRepository helperLanguages;
     private final FileStorage storage;
+    private final ObjectMapper objectMapper;
 
     public ProfileService(
             UserRepository users,
             HelperProfileRepository helpers,
             EmployerProfileRepository employers,
             HelperLanguageRepository helperLanguages,
-            FileStorage storage
+            FileStorage storage,
+            ObjectMapper objectMapper
     ) {
         this.users = users;
         this.helpers = helpers;
         this.employers = employers;
         this.helperLanguages = helperLanguages;
         this.storage = storage;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional(readOnly = true)
@@ -114,6 +118,7 @@ public class ProfileService {
         p.setExpectedSalarySgd(req.expectedSalarySgd());
         p.setAvailableFrom(req.availableFrom());
         p.setCurrentLocation(req.currentLocation());
+        p.setOffDayPolicy(req.offDayPolicy());
         // Null photoUrl means "leave the existing photo alone" — the wizard
         // sends null on re-save when the user didn't pick a new file.
         if (req.photoUrl() != null) {
@@ -124,6 +129,12 @@ public class ProfileService {
         p.setScoreCooking((short) req.skills().cooking().intValue());
         p.setScoreHouse((short) req.skills().house().intValue());
         p.setScoreAttitude((short) req.skills().attitude().intValue());
+        try {
+            p.setWorkHistory(req.workHistory() == null ? "[]"
+                    : objectMapper.writeValueAsString(req.workHistory()));
+        } catch (Exception ex) {
+            p.setWorkHistory("[]");
+        }
         p.setUpdatedAt(now);
 
         helpers.save(p);
@@ -170,7 +181,7 @@ public class ProfileService {
         p.setSalaryOfferSgdMin(req.salaryOfferSgdMin());
         p.setSalaryOfferSgdMax(req.salaryOfferSgdMax());
         p.setOffDayPolicy(req.offDayPolicy());
-        p.setPreferredLanguage(req.preferredLanguage());
+        p.setPreferredLanguages(req.preferredLanguages() == null ? new String[0] : req.preferredLanguages().toArray(String[]::new));
         p.setHiringPurpose(req.hiringPurpose());
         p.setPurposeTags(req.purposeTags() == null ? new String[0] : req.purposeTags().toArray(String[]::new));
         p.setWeightInfant((short) req.weights().infant().intValue());

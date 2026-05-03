@@ -7,6 +7,8 @@ export interface ConversationView {
   counterpartyUserId: string;
   counterpartyDisplayName: string;
   counterpartyPhotoUrl: string | null;
+  /** Employer-only: helper's email, revealed as soon as the employer opens the chat. */
+  counterpartyContact: string | null;
   lastMessageAt: string | null;       // ISO-8601
   lastMessagePreview: string | null;
   unreadCount: number;
@@ -17,6 +19,8 @@ export interface MessageView {
   id: string;
   conversationId: string;
   senderUserId: string;
+  senderRole: string | null;
+  senderDisplayName: string | null;
   body: string;
   sentAt: string;                     // ISO-8601
   readAt: string | null;

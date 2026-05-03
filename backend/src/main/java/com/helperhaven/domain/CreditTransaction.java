@@ -12,18 +12,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
 
-/**
- * Append-only ledger row for a wallet movement. The wallet's {@code balance}
- * column is the cached running total; the source of truth is the sum of these
- * deltas. We persist {@code balanceAfter} on each row so an admin reconciler
- * can detect drift without a full re-sum.
- */
 @Entity
 @Table(name = "credit_transactions")
 @Getter
@@ -39,13 +31,11 @@ public class CreditTransaction {
     @Column(name = "wallet_user_id", nullable = false)
     private UUID walletUserId;
 
-    /** Negative for spend, positive for grant/refund. */
     @Column(nullable = false)
     private Integer delta;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(nullable = false, columnDefinition = "credit_reason")
+    @Column(nullable = false)
     private CreditReason reason;
 
     @Column(name = "reference_type")

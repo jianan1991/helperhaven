@@ -38,6 +38,18 @@ export interface LanguageProficiency {
   proficiency: number;
 }
 
+export interface WorkEntry {
+  id: string;
+  country: string;
+  location: string;
+  startDate: string;
+  endDate: string;
+  isCurrent: boolean;
+  description: string;
+  duties: string[];
+  leftBecause: string;
+}
+
 export interface HelperProfile {
   userId: string;
   displayFirstName: string;
@@ -59,11 +71,13 @@ export interface HelperProfile {
   expectedSalarySgd: number | null;
   availableFrom: string | null;
   currentLocation: string | null;
+  offDayPolicy: string | null;
   photoUrl: string | null;
   skills: FiveVector;
   languages: LanguageProficiency[];
   availableForTransfer: boolean;
   transferAvailableFrom: string | null;
+  workHistory: WorkEntry[];
 }
 
 export type HelperProfileRequest = Omit<
@@ -83,7 +97,7 @@ export interface EmployerProfile {
   salaryOfferSgdMin: number | null;
   salaryOfferSgdMax: number | null;
   offDayPolicy: string | null;
-  preferredLanguage: string | null;
+  preferredLanguages: string[]; // kept for API compat, not shown in UI
   hiringPurpose: string | null;
   purposeTags: string[];
   weights: FiveVector;
@@ -186,21 +200,50 @@ export interface MatchView {
   subtitle: string | null;
   age: number | null;
   yearsExperience: number | null;
-  bio: string | null;
+  // Pre-unlock helper fields (always visible to employer)
+  willingLiveIn: boolean | null;
+  expectedSalarySgd: number | null;
+  availableFrom: string | null;
+  currentLocation: string | null;
+  workHistory: WorkEntry[] | null;
   photoUrl: string | null;
   score: number;
   reasons: string[];
   scores: FiveVector;
   unlocked: boolean;
+  interested: boolean;
+  interestExpiresAt: string | null;
+  // Bio: helper's bio or employer's hiring purpose
+  bio: string | null;
   comfortableWithChildren: boolean | null;
   comfortableWithPets: boolean | null;
   halal: boolean | null;
   allergies: string | null;
+  // Employer-specific fields (populated when a helper views a family match)
+  householdSize: number | null;
+  numChildren: number | null;
+  numElderly: number | null;
+  hasPets: boolean | null;
+  district: string | null;
+  salaryMin: number | null;
+  salaryMax: number | null;
+  offDayPolicy: string | null;
+  preferredLanguages: string[];
+  purposeTags: string[];
 }
 
 export async function fetchMatches(): Promise<MatchView[]> {
   const { data } = await api.get<MatchView[]>('/matches');
   return data;
+}
+
+export async function expressInterest(employerId: string): Promise<{ interested: boolean; interestExpiresAt: string }> {
+  const { data } = await api.post<{ interested: boolean; interestExpiresAt: string }>(`/interests/${employerId}`);
+  return data;
+}
+
+export async function withdrawInterest(employerId: string): Promise<void> {
+  await api.delete(`/interests/${employerId}`);
 }
 
 // ---------- Helpers ----------

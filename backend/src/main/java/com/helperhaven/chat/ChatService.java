@@ -21,6 +21,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -131,9 +132,21 @@ public class ChatService {
         List<Message> rows = since == null
                 ? messages.findByConversationIdOrderBySentAtAsc(conversationId)
                 : messages.findSince(conversationId, since);
+        Map<UUID, User> senderMap = buildSenderMap(rows);
         List<MessageView> out = new ArrayList<>(rows.size());
-        for (Message m : rows) out.add(toView(m));
+        for (Message m : rows) {
+            if (!m.isFlagged()) out.add(toView(m, senderMap.get(m.getSenderUserId())));
+        }
         return out;
+    }
+
+    private Map<UUID, User> buildSenderMap(List<Message> rows) {
+        Map<UUID, User> map = new java.util.HashMap<>();
+        rows.stream()
+                .map(Message::getSenderUserId)
+                .distinct()
+                .forEach(id -> users.findById(id).ifPresent(u -> map.put(id, u)));
+        return map;
     }
 
     @Transactional
@@ -165,7 +178,8 @@ public class ChatService {
         if (userId.equals(c.getUserAId())) c.setLastReadAtA(now);
         else c.setLastReadAtB(now);
 
-        return toView(m);
+        User sender = users.findById(userId).orElse(null);
+        return toView(m, sender);
     }
 
     /**
@@ -193,7 +207,9 @@ public class ChatService {
 
     private ConversationView view(Conversation c, UUID viewerId) {
         UUID counterparty = viewerId.equals(c.getUserAId()) ? c.getUserBId() : c.getUserAId();
-        Counterparty cp = lookupCounterparty(counterparty);
+        User viewer = users.findById(viewerId).orElse(null);
+        boolean viewerIsEmployer = viewer != null && viewer.getRole() == com.helperhaven.domain.enums.UserRole.EMPLOYER;
+        Counterparty cp = lookupCounterparty(counterparty, viewerIsEmployer);
         Instant cursor = viewerId.equals(c.getUserAId()) ? c.getLastReadAtA() : c.getLastReadAtB();
         int unread = unreadCount(c.getId(), viewerId, cursor);
         String preview = previewFor(c.getId());
@@ -202,6 +218,7 @@ public class ChatService {
                 counterparty,
                 cp.displayName(),
                 cp.photoUrl(),
+                cp.contact(),
                 c.getLastMessageAt(),
                 preview,
                 unread,
@@ -209,15 +226,33 @@ public class ChatService {
         );
     }
 
-    private MessageView toView(Message m) {
+    private MessageView toView(Message m, User sender) {
+        String role = sender != null ? sender.getRole().name() : null;
+        String displayName = resolveDisplayName(sender);
         return new MessageView(
                 m.getId(),
                 m.getConversationId(),
                 m.getSenderUserId(),
+                role,
+                displayName,
                 m.getBody(),
                 m.getSentAt(),
                 m.getReadAt()
         );
+    }
+
+    private String resolveDisplayName(User sender) {
+        if (sender == null) return null;
+        return switch (sender.getRole()) {
+            case HELPER -> helpers.findById(sender.getId())
+                    .map(h -> h.getDisplayFirstName() != null ? h.getDisplayFirstName() : h.getFullName())
+                    .orElse(null);
+            case EMPLOYER -> employers.findById(sender.getId())
+                    .map(com.helperhaven.domain.EmployerProfile::getFullName)
+                    .orElse(null);
+            case ADMIN -> "HelperHaven Admin";
+            default -> null;
+        };
     }
 
     /** Count messages in {@code conversationId} that aren't from {@code viewerId} and post-date their cursor. */
@@ -228,33 +263,40 @@ public class ChatService {
                 : messages.findSince(conversationId, cursor);
         int n = 0;
         for (Message m : rows) {
-            if (!m.getSenderUserId().equals(viewerId)) n++;
+            if (!m.isFlagged() && !m.getSenderUserId().equals(viewerId)) n++;
         }
         return n;
     }
 
     private String previewFor(UUID conversationId) {
-        // Sprint A: scan the in-order list and take the last one. We only do this
-        // for the sidebar list endpoint; the per-conversation views don't need it.
         List<Message> all = messages.findByConversationIdOrderBySentAtAsc(conversationId);
-        if (all.isEmpty()) return null;
-        String body = all.get(all.size() - 1).getBody();
-        if (body == null) return null;
-        return body.length() <= PREVIEW_LEN ? body : body.substring(0, PREVIEW_LEN - 1) + "…";
+        for (int i = all.size() - 1; i >= 0; i--) {
+            Message m = all.get(i);
+            if (m.isFlagged()) continue;
+            String body = m.getBody();
+            if (body == null) continue;
+            return body.length() <= PREVIEW_LEN ? body : body.substring(0, PREVIEW_LEN - 1) + "…";
+        }
+        return null;
     }
 
-    /** Resolve a user ID to {displayName, photoUrl} without exposing whole profile DTOs. */
-    private Counterparty lookupCounterparty(UUID userId) {
+    /**
+     * Resolve a user ID to display info.
+     * When {@code revealContact} is true (viewer is employer) the helper's email is included.
+     */
+    private Counterparty lookupCounterparty(UUID userId, boolean revealContact) {
         User u = users.findById(userId).orElse(null);
-        if (u == null) return new Counterparty("Unknown", null);
+        if (u == null) return new Counterparty("Unknown", null, null);
 
         switch (u.getRole()) {
             case HELPER -> {
                 HelperProfile h = helpers.findById(userId).orElse(null);
                 if (h != null) {
+                    String contact = revealContact ? u.getEmail() : null;
                     return new Counterparty(
                             h.getDisplayFirstName() == null ? "Helper" : h.getDisplayFirstName(),
-                            signedPhoto(h.getPhotoUrl())
+                            signedPhoto(h.getPhotoUrl()),
+                            contact
                     );
                 }
             }
@@ -265,14 +307,14 @@ public class ChatService {
                     if (name == null || name.isBlank()) {
                         name = "Family in " + (e.getDistrict() == null ? "SG" : e.getDistrict());
                     }
-                    return new Counterparty(name, null);
+                    return new Counterparty(name, null, null);
                 }
             }
             default -> {
                 // ADMIN / AGENCY shouldn't appear in chat in Sprint A, but fall through cleanly.
             }
         }
-        return new Counterparty(u.getEmail() == null ? "Unknown" : u.getEmail(), null);
+        return new Counterparty(u.getEmail() == null ? "Unknown" : u.getEmail(), null, null);
     }
 
     private String signedPhoto(String keyOrUrl) {
@@ -281,7 +323,7 @@ public class ChatService {
         return storage.signedGetUrl(keyOrUrl, PHOTO_GET_TTL);
     }
 
-    private record Counterparty(String displayName, String photoUrl) {}
+    private record Counterparty(String displayName, String photoUrl, String contact) {}
 
     // ---------------------------------------------------------------- errors
 

@@ -11,8 +11,25 @@ import {
   type ConversationView,
   type MessageView,
 } from '../lib/chat';
+import {
+  acceptOffer,
+  counterOffer,
+  createOffer,
+  listOffers,
+  rejectOffer,
+  type OfferView,
+} from '../lib/offers';
 import { demoMarkHired, getPermitWith, type PermitCaseView } from '../lib/reviews';
 import { fetchWallet } from '../lib/wallet';
+
+const OFF_DAY_OPTIONS = [
+  'One full Sunday per week',
+  'Two Sundays per month',
+  'One Sunday per month',
+  'Alternate Sundays',
+  'Any weekday (negotiable)',
+  'No fixed day off',
+];
 
 const POLL_MS = 3000;
 const REFUND_WINDOW_MS = 48 * 60 * 60 * 1000;
@@ -34,6 +51,18 @@ export default function ChatsPage() {
   const [permit, setPermit] = useState<PermitCaseView | null>(null);
   const [hiringInFlight, setHiringInFlight] = useState(false);
   const [threadError, setThreadError] = useState<string | null>(null);
+
+  // Offer role composer
+  const [offerOpen, setOfferOpen] = useState(false);
+  const [offerSalary, setOfferSalary] = useState('');
+  const [offerOffDay, setOfferOffDay] = useState('');
+
+  // Offer data map and counter form
+  const [offers, setOffers] = useState<Record<string, OfferView>>({});
+  const [counteringId, setCounteringId] = useState<string | null>(null);
+  const [counterSalary, setCounterSalary] = useState('');
+  const [counterOffDay, setCounterOffDay] = useState('');
+  const [offerActionInFlight, setOfferActionInFlight] = useState(false);
 
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const lastSentAtRef = useRef<string | null>(null);
@@ -59,7 +88,7 @@ export default function ChatsPage() {
   useEffect(() => {
     if (!activeId) { setActiveConv(null); setMessages([]); return; }
     let cancelled = false;
-    setActiveConv(null); setMessages([]); setThreadError(null); lastSentAtRef.current = null;
+    setActiveConv(null); setMessages([]); setOffers({}); setCounteringId(null); setThreadError(null); lastSentAtRef.current = null;
     (async () => {
       try {
         const c = await openChat(activeId);
@@ -70,6 +99,12 @@ export default function ChatsPage() {
         setMessages(init);
         if (init.length) lastSentAtRef.current = init[init.length - 1].sentAt;
         markRead(c.id).catch(() => {});
+        listOffers(c.id).then((list) => {
+          if (cancelled) return;
+          const map: Record<string, OfferView> = {};
+          list.forEach((o) => { map[o.id] = o; });
+          setOffers(map);
+        }).catch(() => {});
       } catch (err) {
         if (!cancelled) setThreadError(asMessage(err, 'Could not open conversation.'));
       }
@@ -95,6 +130,13 @@ export default function ChatsPage() {
         if (cancelled || !fresh.length) return;
         setMessages((prev) => mergeMessages(prev, fresh));
         lastSentAtRef.current = fresh[fresh.length - 1].sentAt;
+        listOffers(activeConv.id).then((list) => {
+          setOffers((prev) => {
+            const next = { ...prev };
+            list.forEach((o) => { next[o.id] = o; });
+            return next;
+          });
+        }).catch(() => {});
         if (fresh.some((m) => m.senderUserId !== me?.id)) {
           markRead(activeConv.id).catch(() => {});
           setConvs((prev) =>
@@ -145,6 +187,95 @@ export default function ChatsPage() {
     finally { setHiringInFlight(false); }
   }
 
+  async function onSendOffer() {
+    if (!activeConv || sending) return;
+    const salary = parseInt(offerSalary, 10);
+    if (!salary || salary < 1) return;
+
+    setOfferOpen(false);
+    setOfferSalary('');
+    setOfferOffDay('');
+    setSending(true);
+    try {
+      const offer = await createOffer(activeConv.id, {
+        salarySgd: salary,
+        offDayPolicy: offerOffDay || null,
+      });
+      setOffers((prev) => ({ ...prev, [offer.id]: offer }));
+      // The backend sends an OFFER:{id} message; fetch it via a fresh poll
+      const fresh = await listMessages(activeConv.id, lastSentAtRef.current ?? undefined);
+      if (fresh.length) {
+        setMessages((prev) => mergeMessages(prev, fresh));
+        lastSentAtRef.current = fresh[fresh.length - 1].sentAt;
+        setConvs((prev) =>
+          prev?.map((c) =>
+            c.id === activeConv.id
+              ? { ...c, lastMessagePreview: fresh[fresh.length - 1].body, lastMessageAt: fresh[fresh.length - 1].sentAt }
+              : c
+          ) ?? prev
+        );
+      }
+    } catch (err) {
+      setThreadError(asMessage(err, 'Could not send offer.'));
+    } finally { setSending(false); }
+  }
+
+  async function onAcceptOffer(offerId: string) {
+    if (offerActionInFlight) return;
+    setOfferActionInFlight(true);
+    try {
+      const updated = await acceptOffer(offerId);
+      setOffers((prev) => ({ ...prev, [offerId]: updated }));
+      const fresh = await listMessages(activeConv!.id, lastSentAtRef.current ?? undefined);
+      if (fresh.length) {
+        setMessages((prev) => mergeMessages(prev, fresh));
+        lastSentAtRef.current = fresh[fresh.length - 1].sentAt;
+      }
+    } catch (err) {
+      setThreadError(asMessage(err, 'Could not accept offer.'));
+    } finally { setOfferActionInFlight(false); }
+  }
+
+  async function onRejectOffer(offerId: string) {
+    if (offerActionInFlight) return;
+    setOfferActionInFlight(true);
+    try {
+      const updated = await rejectOffer(offerId);
+      setOffers((prev) => ({ ...prev, [offerId]: updated }));
+      const fresh = await listMessages(activeConv!.id, lastSentAtRef.current ?? undefined);
+      if (fresh.length) {
+        setMessages((prev) => mergeMessages(prev, fresh));
+        lastSentAtRef.current = fresh[fresh.length - 1].sentAt;
+      }
+    } catch (err) {
+      setThreadError(asMessage(err, 'Could not decline offer.'));
+    } finally { setOfferActionInFlight(false); }
+  }
+
+  async function onCounterOffer(offerId: string) {
+    if (offerActionInFlight) return;
+    const salary = parseInt(counterSalary, 10);
+    if (!salary || salary < 1) return;
+    setOfferActionInFlight(true);
+    try {
+      const newOffer = await counterOffer(offerId, {
+        salarySgd: salary,
+        offDayPolicy: counterOffDay || null,
+      });
+      setOffers((prev) => ({ ...prev, [offerId]: { ...prev[offerId], status: 'COUNTERED' }, [newOffer.id]: newOffer }));
+      setCounteringId(null);
+      setCounterSalary('');
+      setCounterOffDay('');
+      const fresh = await listMessages(activeConv!.id, lastSentAtRef.current ?? undefined);
+      if (fresh.length) {
+        setMessages((prev) => mergeMessages(prev, fresh));
+        lastSentAtRef.current = fresh[fresh.length - 1].sentAt;
+      }
+    } catch (err) {
+      setThreadError(asMessage(err, 'Could not send counter offer.'));
+    } finally { setOfferActionInFlight(false); }
+  }
+
   const isRefundEligible = (c: ConversationView) =>
     !c.lastMessagePreview && Date.now() - new Date(c.createdAt).getTime() > REFUND_WINDOW_MS;
 
@@ -165,7 +296,9 @@ export default function ChatsPage() {
           </div>
           <h1 className="serif text-4xl font-bold text-ink-900 mt-2">Your conversations</h1>
           <p className="mt-2 text-ink-500 text-sm max-w-xl">
-            Names &amp; contact details stay hidden until you both agree to share.
+            {me?.role === 'EMPLOYER'
+              ? "Helper contact details are visible once you open a chat."
+              : "Families can see your contact details once they open a chat with you."}
           </p>
         </div>
         {me?.role === 'EMPLOYER' && (
@@ -325,8 +458,10 @@ export default function ChatsPage() {
                 <span className="serif text-lg font-bold text-ink-900">
                   {activeConv.counterpartyDisplayName}
                 </span>
-                <div className="text-xs text-ink-500 mt-0.5 truncate">
-                  Contact details stay hidden until you both agree to share.
+                <div className="text-xs mt-0.5 truncate">
+                  {activeConv.counterpartyContact
+                    ? <span className="text-sage-700 font-medium">✉ {activeConv.counterpartyContact}</span>
+                    : <span className="text-ink-500">{me?.role === 'HELPER' ? 'Family can see your contact details.' : ''}</span>}
                 </div>
               </div>
               <div className="flex gap-2 shrink-0">
@@ -360,7 +495,7 @@ export default function ChatsPage() {
               {/* System notice — thread open */}
               <div className="flex justify-center">
                 <div className="text-[10px] text-ink-500 bg-white border border-cream-200 px-3 py-1 rounded-full">
-                  Thread opened · 🪙 1 credit · Contact hidden until mutual
+                  Thread opened · 🪙 1 credit · Helper contact details shared
                 </div>
               </div>
 
@@ -369,23 +504,106 @@ export default function ChatsPage() {
                   Say hello — your message starts the conversation.
                 </div>
               ) : (
-                messages.map((m) => (
-                  <Bubble key={m.id} msg={m} mine={m.senderUserId === me?.id} />
-                ))
+                messages.map((m) => {
+                  if (m.body.startsWith('OFFER:')) {
+                    const offerId = m.body.slice(6);
+                    const offer = offers[offerId];
+                    if (!offer) return <Bubble key={m.id} msg={m} mine={m.senderUserId === me?.id} />;
+                    return (
+                      <OfferCard
+                        key={m.id}
+                        offer={offer}
+                        myId={me!.id}
+                        myRole={me!.role}
+                        isCountering={counteringId === offerId}
+                        counterSalary={counterSalary}
+                        counterOffDay={counterOffDay}
+                        inFlight={offerActionInFlight}
+                        onAccept={() => void onAcceptOffer(offerId)}
+                        onReject={() => void onRejectOffer(offerId)}
+                        onStartCounter={() => { setCounteringId(offerId); setCounterSalary(''); setCounterOffDay(''); }}
+                        onCancelCounter={() => setCounteringId(null)}
+                        onSubmitCounter={() => void onCounterOffer(offerId)}
+                        onCounterSalaryChange={setCounterSalary}
+                        onCounterOffDayChange={setCounterOffDay}
+                        onInitiatePlacement={() => {
+                          nav(`/manage?offer=${offerId}`);
+                        }}
+                      />
+                    );
+                  }
+                  return <Bubble key={m.id} msg={m} mine={m.senderUserId === me?.id} />;
+                })
               )}
 
-              {/* PII notice below messages */}
-              {messages.length > 0 && (
+              {/* Contact notice below messages */}
+              {messages.length > 0 && activeConv.counterpartyContact && (
                 <div className="flex justify-center pt-1">
-                  <div className="text-[10px] text-ink-500 bg-white border border-cream-200 px-3 py-1 rounded-full max-w-xs text-center">
-                    🔒 Both sides must agree to share contact details.
+                  <div className="text-[10px] text-sage-700 bg-white border border-sage-400/30 px-3 py-1 rounded-full max-w-xs text-center">
+                    ✉ {activeConv.counterpartyContact}
                   </div>
                 </div>
               )}
             </div>
 
+            {/* Offer role panel — employer only */}
+            {me?.role === 'EMPLOYER' && offerOpen && (
+              <div className="px-4 py-4 border-t border-cream-200 bg-cream-50 space-y-3 shrink-0">
+                <div className="flex items-center justify-between">
+                  <span className="serif text-sm font-bold text-ink-900">Offer helper role</span>
+                  <button type="button" onClick={() => setOfferOpen(false)} className="text-xs text-ink-500 hover:text-ink-900">✕ cancel</button>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] uppercase tracking-wide text-ink-500 mb-1 block">Salary offered (SGD/mo)</label>
+                    <input
+                      type="number"
+                      value={offerSalary}
+                      onChange={(e) => setOfferSalary(e.target.value)}
+                      placeholder="e.g. 700"
+                      min={1}
+                      className="w-full px-3 py-2 rounded-xl border border-cream-200 bg-white text-sm focus:outline-none focus:border-sage-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] uppercase tracking-wide text-ink-500 mb-1 block">Off-day policy</label>
+                    <select
+                      value={offerOffDay}
+                      onChange={(e) => setOfferOffDay(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-cream-200 bg-white text-sm focus:outline-none focus:border-sage-500"
+                    >
+                      <option value="">Select…</option>
+                      <option>One full Sunday per week</option>
+                      <option>Two Sundays per month</option>
+                      <option>One Sunday per month</option>
+                      <option>Alternate Sundays</option>
+                      <option>Any weekday (negotiable)</option>
+                      <option>No fixed day off</option>
+                    </select>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void onSendOffer()}
+                  disabled={!offerSalary || parseInt(offerSalary, 10) < 1 || sending}
+                  className="w-full py-2.5 rounded-full bg-clay-500 text-white font-medium text-sm hover:bg-clay-600 disabled:opacity-60 transition-colors"
+                >
+                  Send offer →
+                </button>
+              </div>
+            )}
+
             {/* Composer */}
             <div className="p-4 border-t border-cream-200 flex gap-3 items-center shrink-0">
+              {me?.role === 'EMPLOYER' && !offerOpen && (
+                <button
+                  type="button"
+                  onClick={() => setOfferOpen(true)}
+                  className="shrink-0 text-xs px-3 py-2 rounded-full bg-cream-50 border border-cream-200 hover:border-sage-500 text-ink-700 transition-colors"
+                >
+                  📋 Offer role
+                </button>
+              )}
               <input
                 type="text"
                 value={draft}
@@ -419,21 +637,227 @@ export default function ChatsPage() {
 
 // ── Sub-components ──
 
-function Bubble({ msg, mine }: { msg: MessageView; mine: boolean }) {
+function useOfferCountdown(expiresAt: string): string {
+  const [label, setLabel] = useState('');
+  useEffect(() => {
+    function tick() {
+      const diff = new Date(expiresAt).getTime() - Date.now();
+      if (diff <= 0) { setLabel('Expired'); return; }
+      const totalMins = Math.floor(diff / 60_000);
+      const days = Math.floor(totalMins / 1440);
+      const hours = Math.floor((totalMins % 1440) / 60);
+      const mins = totalMins % 60;
+      if (days > 0) setLabel(`${days}d ${hours}h left`);
+      else if (hours > 0) setLabel(`${hours}h ${mins}m left`);
+      else setLabel(`${mins}m left`);
+    }
+    tick();
+    const h = setInterval(tick, 60_000);
+    return () => clearInterval(h);
+  }, [expiresAt]);
+  return label;
+}
+
+function OfferCard({
+  offer,
+  myId,
+  myRole,
+  isCountering,
+  counterSalary,
+  counterOffDay,
+  inFlight,
+  onAccept,
+  onReject,
+  onStartCounter,
+  onCancelCounter,
+  onSubmitCounter,
+  onCounterSalaryChange,
+  onCounterOffDayChange,
+  onInitiatePlacement,
+}: {
+  offer: OfferView;
+  myId: string;
+  myRole: string;
+  isCountering: boolean;
+  counterSalary: string;
+  counterOffDay: string;
+  inFlight: boolean;
+  onAccept: () => void;
+  onReject: () => void;
+  onStartCounter: () => void;
+  onCancelCounter: () => void;
+  onSubmitCounter: () => void;
+  onCounterSalaryChange: (v: string) => void;
+  onCounterOffDayChange: (v: string) => void;
+  onInitiatePlacement: () => void;
+}) {
+  const countdown = useOfferCountdown(offer.expiresAt);
+  const expired = new Date(offer.expiresAt) < new Date();
+  const isMine = offer.createdByUserId === myId;
+  const canAct = !isMine && offer.status === 'PENDING' && !expired;
+
+  const statusBadge: Record<string, string> = {
+    PENDING: expired ? 'bg-ink-100 text-ink-500' : 'bg-cream-100 text-ink-700',
+    ACCEPTED: 'bg-sage-100 text-sage-800',
+    REJECTED: 'bg-clay-100 text-clay-700',
+    COUNTERED: 'bg-cream-100 text-ink-500',
+    EXPIRED: 'bg-ink-100 text-ink-500',
+  };
+  const statusLabel: Record<string, string> = {
+    PENDING: expired ? 'Expired' : 'Awaiting response',
+    ACCEPTED: '✅ Accepted',
+    REJECTED: '❌ Declined',
+    COUNTERED: '↩ Countered',
+    EXPIRED: 'Expired',
+  };
+
   return (
-    <div className={`flex ${mine ? 'justify-end' : ''}`}>
+    <div className="flex justify-center my-1">
+      <div className="w-full max-w-sm rounded-2xl border border-cream-200 bg-white shadow-soft overflow-hidden">
+        {/* Header */}
+        <div className="px-4 pt-4 pb-3 border-b border-cream-200 flex items-center justify-between">
+          <span className="serif text-sm font-bold text-ink-900">📋 Job Offer</span>
+          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusBadge[offer.status] ?? statusBadge.PENDING}`}>
+            {statusLabel[offer.status] ?? offer.status}
+          </span>
+        </div>
+
+        {/* Details */}
+        <div className="px-4 py-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-ink-500">Offered salary</span>
+            <span className="text-sm font-semibold text-ink-900">SGD {offer.salarySgd}/month</span>
+          </div>
+          {offer.offDayPolicy && (
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-ink-500">Off-day policy</span>
+              <span className="text-sm text-ink-900">{offer.offDayPolicy}</span>
+            </div>
+          )}
+          {offer.status === 'PENDING' && !expired && (
+            <div className="text-[10px] text-ink-400 text-right">⏳ {countdown}</div>
+          )}
+        </div>
+
+        {/* Counter form */}
+        {isCountering && (
+          <div className="px-4 pb-4 space-y-3 border-t border-cream-200 pt-3">
+            <p className="text-xs font-semibold text-ink-700">Counter offer</p>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[10px] uppercase tracking-wide text-ink-500 mb-1 block">Salary (SGD/mo)</label>
+                <input
+                  type="number"
+                  value={counterSalary}
+                  onChange={(e) => onCounterSalaryChange(e.target.value)}
+                  placeholder="e.g. 750"
+                  min={1}
+                  className="w-full px-2.5 py-1.5 rounded-xl border border-cream-200 bg-cream-50 text-sm focus:outline-none focus:border-sage-500"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] uppercase tracking-wide text-ink-500 mb-1 block">Off-day</label>
+                <select
+                  value={counterOffDay}
+                  onChange={(e) => onCounterOffDayChange(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded-xl border border-cream-200 bg-cream-50 text-sm focus:outline-none focus:border-sage-500"
+                >
+                  <option value="">Select…</option>
+                  {OFF_DAY_OPTIONS.map((o) => <option key={o}>{o}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onSubmitCounter}
+                disabled={!counterSalary || parseInt(counterSalary, 10) < 1 || inFlight}
+                className="flex-1 py-2 rounded-full bg-clay-500 text-white text-xs font-medium hover:bg-clay-600 disabled:opacity-60 transition-colors"
+              >
+                Send counter →
+              </button>
+              <button
+                type="button"
+                onClick={onCancelCounter}
+                className="px-4 py-2 rounded-full text-xs text-ink-600 hover:bg-cream-100 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Actions */}
+        {canAct && !isCountering && (
+          <div className="px-4 pb-4 flex gap-2 border-t border-cream-200 pt-3">
+            <button
+              type="button"
+              onClick={onAccept}
+              disabled={inFlight}
+              className="flex-1 py-2 rounded-full bg-sage-700 text-white text-xs font-medium hover:bg-sage-600 disabled:opacity-60 transition-colors"
+            >
+              Accept
+            </button>
+            <button
+              type="button"
+              onClick={onStartCounter}
+              disabled={inFlight}
+              className="flex-1 py-2 rounded-full bg-cream-50 border border-cream-200 text-xs text-ink-700 hover:border-sage-500 disabled:opacity-60 transition-colors"
+            >
+              Counter
+            </button>
+            <button
+              type="button"
+              onClick={onReject}
+              disabled={inFlight}
+              className="flex-1 py-2 rounded-full bg-cream-50 border border-cream-200 text-xs text-clay-600 hover:border-clay-400 disabled:opacity-60 transition-colors"
+            >
+              Decline
+            </button>
+          </div>
+        )}
+
+        {/* What's next — employer only, after acceptance */}
+        {offer.status === 'ACCEPTED' && myRole === 'EMPLOYER' && (
+          <div className="px-4 pb-4 border-t border-cream-200 pt-3">
+            <p className="text-[11px] text-ink-500 mb-2">Offer accepted — next steps are ready for you.</p>
+            <button
+              type="button"
+              onClick={() => onInitiatePlacement('JWC')}
+              className="w-full py-2.5 rounded-full bg-sage-900 text-cream-100 text-xs font-medium hover:bg-sage-800 transition-colors"
+            >
+              Continue to Manage Helper →
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Bubble({ msg, mine }: { msg: MessageView; mine: boolean }) {
+  const isAdmin = msg.senderRole === 'ADMIN';
+  return (
+    <div className={`flex ${mine && !isAdmin ? 'justify-end' : ''}`}>
       <div className="max-w-[75%] space-y-1">
+        {isAdmin && (
+          <div className="text-[10px] font-semibold text-clay-500 mb-0.5">
+            {msg.senderDisplayName ?? 'HelperHaven Admin'}
+          </div>
+        )}
         <div
           className={`px-4 py-2.5 text-sm whitespace-pre-wrap break-words ${
-            mine
+            isAdmin
+              ? 'rounded-2xl rounded-tl-sm bg-blush-100 border border-blush-200 text-ink-900'
+              : mine
               ? 'rounded-2xl rounded-tr-sm bg-sage-700 text-cream-100'
               : 'rounded-2xl rounded-tl-sm bg-white border border-cream-200 text-ink-900'
           }`}
         >
           {msg.body}
         </div>
-        <div className={`text-[10px] text-ink-500 ${mine ? 'text-right' : ''}`}>
-          {mine ? 'You · ' : ''}{formatTime(msg.sentAt)}
+        <div className={`text-[10px] text-ink-500 ${mine && !isAdmin ? 'text-right' : ''}`}>
+          {mine && !isAdmin ? 'You · ' : ''}{formatTime(msg.sentAt)}
         </div>
       </div>
     </div>

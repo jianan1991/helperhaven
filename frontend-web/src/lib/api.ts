@@ -57,6 +57,11 @@ api.interceptors.response.use(
         return api.request(original);
       }
     }
+    // Any 403 on the interests endpoint means wrong account type — sign out so the user
+    // is immediately prompted to log in with the correct account.
+    if (err.response?.status === 403 && err.config?.url?.includes('/interests/')) {
+      useAuthStore.getState().signOut();
+    }
     return Promise.reject(err);
   }
 );
