@@ -7,6 +7,7 @@ import {
   fetchPlacementDocuments,
   uploadPlacementDocument,
   submitPlacementDocuments,
+  submitHelperDocuments,
   PLACEMENT_STEPS,
   type PlacementView,
   type PlacementDocumentView,
@@ -48,13 +49,13 @@ export default function ManageHelperPage() {
     <div className="max-w-3xl mx-auto px-4 md:px-6 py-8 md:py-12">
       <div className="mb-8">
         <div className="text-xs uppercase tracking-widest text-sage-700">
-          {isEmployer ? 'Employer' : 'Helper'} &middot; placements
+          {isEmployer ? 'Employer' : 'Helper'} &middot; hirings
         </div>
-        <h1 className="serif text-4xl font-bold text-ink-900 mt-2">{isEmployer ? 'Manage Helper' : 'Manage Employment'}</h1>
+        <h1 className="serif text-4xl font-bold text-ink-900 mt-2">My Hiring</h1>
         <p className="mt-2 text-ink-500 text-sm max-w-xl">
           {isEmployer
             ? "Track the progress of every helper you've hired or are in the process of hiring."
-            : 'See your active and upcoming placements.'}
+            : 'See your active and upcoming hirings.'}
         </p>
       </div>
 
@@ -62,29 +63,55 @@ export default function ManageHelperPage() {
         <div className="text-center text-ink-500 py-20">Loading&hellip;</div>
       ) : items.length === 0 ? (
         <div className="rounded-3xl border border-cream-200 bg-white p-10 text-center shadow-soft">
-          <p className="text-ink-700 mb-2">No placements yet.</p>
+          <p className="text-ink-700 mb-2">No hirings yet.</p>
           <p className="text-sm text-ink-500 mb-6">
             {isEmployer
-              ? 'Once you accept an offer and initiate the placement, it will appear here.'
-              : 'Once an employer initiates the placement, it will appear here.'}
+              ? 'Once you accept an offer and start a hiring, it will appear here.'
+              : 'Once an employer starts the hiring, it will appear here.'}
           </p>
           <Link to="/matches" className="text-sm text-sage-700 hover:text-sage-900 font-medium">
             Browse matches &rarr;
           </Link>
         </div>
       ) : (
-        <div className="space-y-5">
-          {items.map((p) => (
-            <PlacementCard
-              key={p.id}
-              placement={p}
-              isEmployer={isEmployer}
-              onStatusChange={(id, status) =>
-                setItems((prev) => prev?.map((x) => x.id === id ? { ...x, status } : x) ?? null)
-              }
-            />
-          ))}
-        </div>
+        (() => {
+          const active     = items.filter((p) => p.status === 'ACTIVE');
+          const inProgress = items.filter((p) => p.status !== 'ACTIVE' && p.status !== 'TERMINATED');
+          const terminated = items.filter((p) => p.status === 'TERMINATED');
+          const hasLive = active.length > 0 || inProgress.length > 0;
+          return (
+            <div className="space-y-3">
+              {/* Active hirings — minimized pill */}
+              {active.map((p) => (
+                <ActiveHiringMini key={p.id} placement={p} isEmployer={isEmployer} />
+              ))}
+              {/* In-progress hirings — full card */}
+              {inProgress.map((p) => (
+                <PlacementCard
+                  key={p.id}
+                  placement={p}
+                  isEmployer={isEmployer}
+                  onStatusChange={(id, status) =>
+                    setItems((prev) => prev?.map((x) => x.id === id ? { ...x, status } : x) ?? null)
+                  }
+                />
+              ))}
+              {/* Past hirings — terminated */}
+              {terminated.length > 0 && (
+                <>
+                  {hasLive && (
+                    <div className="pt-4 pb-1">
+                      <p className="text-xs uppercase tracking-widest text-ink-400 font-medium">Past hirings</p>
+                    </div>
+                  )}
+                  {terminated.map((p) => (
+                    <TerminatedHiringCard key={p.id} placement={p} isEmployer={isEmployer} />
+                  ))}
+                </>
+              )}
+            </div>
+          );
+        })()
       )}
     </div>
   );
@@ -143,7 +170,7 @@ function EngagementGateway({
   return (
     <div className="max-w-2xl mx-auto px-4 md:px-6 py-8 md:py-12 space-y-6">
       <div>
-        <div className="text-xs uppercase tracking-widest text-sage-700">Placement &middot; next steps</div>
+        <div className="text-xs uppercase tracking-widest text-sage-700">Hiring &middot; next steps</div>
         <h1 className="serif text-3xl font-bold text-ink-900 mt-2">Offer accepted</h1>
         <p className="mt-2 text-ink-500 text-sm">
           Choose how you&apos;d like to handle the hiring process and work permit.
@@ -250,7 +277,7 @@ function EngagementGateway({
               <ul className="text-[11px] text-ink-500 space-y-0.5 list-disc list-inside">
                 <li>MOM EA Licence No. 25C0000 &middot; JWC Employment Services Pte Ltd</li>
                 <li>Full refund if MOM rejects the application</li>
-                <li>Replacement guarantee: free re-placement within 3 months if helper resigns in month 1</li>
+                <li>Replacement guarantee: free replacement within 3 months if helper resigns in month 1</li>
                 <li>
                   By confirming, you agree to our{' '}
                   <a href="/terms" className="text-sage-700 underline">Terms of Service</a>
@@ -302,8 +329,70 @@ function EngagementGateway({
         disabled={!canConfirm || submitting}
         className="w-full py-3.5 rounded-full bg-sage-900 text-cream-100 font-medium text-sm hover:bg-sage-800 disabled:opacity-50 transition-colors"
       >
-        {submitting ? 'Setting up…' : 'Confirm & start placement →'}
+        {submitting ? 'Setting up…' : 'Confirm & start hiring →'}
       </button>
+    </div>
+  );
+}
+
+// ── Stage descriptions shown to family & helper ───────────────────────────────
+
+const STAGE_DESC: Record<string, string> = {
+  INITIATED:       'Hiring created — awaiting document uploads from both parties.',
+  DOCS_COLLECTION: 'Documents received — our team is reviewing and preparing the MOM application.',
+  MOM_SUBMITTED:   'MOM work permit application submitted — awaiting In-Principle Approval (IPA).',
+  IPA_ISSUED:      'IPA received — employer to purchase bond & insurance and arrange helper\'s arrival.',
+  HELPER_ARRIVAL:  'Helper has arrived — completing Settling-In Programme, medical exam, and biometrics.',
+  ACTIVE:          'Hiring fully active. Welcome to the family!',
+};
+
+// ── Active hiring — minimized pill ───────────────────────────────────────────
+
+function ActiveHiringMini({ placement: p, isEmployer }: { placement: PlacementView; isEmployer: boolean }) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-sage-200 bg-sage-50/50 px-4 py-3">
+      <PersonAvatar src={p.helperPhotoUrl} name={p.helperDisplayName} size="sm" />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-ink-800 truncate">
+            {isEmployer ? p.helperDisplayName : (p.employerDisplayName ?? 'Family')}
+          </span>
+          <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-sage-200 text-sage-800 uppercase tracking-wide shrink-0">
+            Active
+          </span>
+        </div>
+        <p className="text-[11px] text-ink-400 mt-0.5">Employment in progress — managed in My Employment</p>
+      </div>
+      <Link
+        to="/employment"
+        className="shrink-0 text-xs px-3 py-1.5 rounded-full bg-sage-700 text-white hover:bg-sage-800 transition-colors font-medium"
+      >
+        View →
+      </Link>
+    </div>
+  );
+}
+
+// ── Terminated hiring — compact history card ──────────────────────────────────
+
+function TerminatedHiringCard({ placement: p, isEmployer }: { placement: PlacementView; isEmployer: boolean }) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-cream-200 bg-cream-50/50 px-4 py-3 opacity-70">
+      <PersonAvatar src={p.helperPhotoUrl} name={p.helperDisplayName} size="sm" />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-ink-600 truncate">
+            {isEmployer ? p.helperDisplayName : (p.employerDisplayName ?? 'Family')}
+          </span>
+          <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-cream-200 text-ink-500 uppercase tracking-wide shrink-0">
+            Ended
+          </span>
+        </div>
+        <p className="text-[11px] text-ink-400 mt-0.5">
+          {p.engagementMode === 'JWC' ? 'JWC Employment Services' : 'DIY'} &middot; Started{' '}
+          {new Date(p.createdAt).toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' })}
+        </p>
+      </div>
     </div>
   );
 }
@@ -321,7 +410,24 @@ function PlacementCard({
 }) {
   const stepIndex = PLACEMENT_STEPS.findIndex((s) => s.key === p.status);
   const mode = p.engagementMode;
-  const total = p.selectedServices.reduce((sum, s) => sum + s.priceSgd, 0);
+
+  const [docs, setDocs] = useState<PlacementDocumentView[] | null>(null);
+  const [employerDocsSubmittedAt, setEmployerDocsSubmittedAt] = useState<string | null>(p.employerDocsSubmittedAt);
+  const [helperDocsSubmittedAt, setHelperDocsSubmittedAt] = useState<string | null>(p.helperDocsSubmittedAt);
+
+  useEffect(() => {
+    fetchPlacementDocuments(p.id).then(setDocs).catch(() => setDocs([]));
+  }, [p.id]);
+
+  function handleDocUploaded(doc: PlacementDocumentView) {
+    setDocs((prev) => {
+      const next = (prev ?? []).filter((d) => d.docType !== doc.docType);
+      return [...next, doc];
+    });
+  }
+
+  const employerDocs = (docs ?? []).filter((d) => d.uploadedByRole === 'EMPLOYER');
+  const helperDocs   = (docs ?? []).filter((d) => d.uploadedByRole === 'HELPER');
 
   return (
     <div className="rounded-3xl border border-cream-200 bg-white p-5 md:p-6 shadow-soft space-y-5">
@@ -350,15 +456,18 @@ function PlacementCard({
         </Link>
       </div>
 
-      {/* Progress stepper */}
-      <div className="flex items-center">
+      {/* Progress stepper with services shown under their stage */}
+      <div className="flex items-start">
         {PLACEMENT_STEPS.map((step, i) => {
-          const done = i <= stepIndex;
+          const done   = i <= stepIndex;
           const active = i === stepIndex;
+          const stageSvcs = mode === 'JWC'
+            ? p.selectedServices.filter((s) => s.workflowStage === step.key)
+            : [];
           return (
-            <div key={step.key} className="flex items-center flex-1 last:flex-none">
-              <div className="flex flex-col items-center gap-1">
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold ring-2 ${
+            <div key={step.key} className="flex items-start flex-1 last:flex-none">
+              <div className="flex flex-col items-center gap-1 min-w-0 flex-1 last:flex-none">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold ring-2 shrink-0 ${
                   active ? 'bg-sage-700 text-white ring-sage-300'
                   : done  ? 'bg-sage-500 text-white ring-sage-200'
                           : 'bg-cream-100 text-ink-400 ring-cream-200'
@@ -370,71 +479,132 @@ function PlacementCard({
                 }`}>
                   {step.label}
                 </span>
+                {stageSvcs.length > 0 && (
+                  <div className={`flex flex-col items-center gap-1 mt-1 ${i > stepIndex ? 'opacity-40' : ''}`}>
+                    {stageSvcs.map((svc) => (
+                      <div key={svc.id} className="flex flex-col items-center gap-0.5">
+                        <span className="text-base leading-none">{svc.icon}</span>
+                        <span
+                          className="text-[9px] text-ink-500 text-center leading-tight w-[52px] truncate"
+                          title={svc.title}
+                        >
+                          {svc.title}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               {i < PLACEMENT_STEPS.length - 1 && (
-                <div className={`flex-1 h-0.5 mx-1 mb-4 rounded ${i < stepIndex ? 'bg-sage-400' : 'bg-cream-200'}`} />
+                <div className={`flex-1 h-0.5 mx-1 mt-3.5 rounded shrink-0 ${i < stepIndex ? 'bg-sage-400' : 'bg-cream-200'}`} />
               )}
             </div>
           );
         })}
       </div>
 
-      {/* Selected services summary (JWC only) */}
-      {mode === 'JWC' && p.selectedServices.length > 0 && (
-        <div className="rounded-2xl bg-cream-50 border border-cream-200 divide-y divide-cream-100 overflow-hidden">
-          {p.selectedServices.map((svc) => (
-            <div key={svc.id} className="flex items-center gap-2.5 px-4 py-2.5">
-              <span className="text-base">{svc.icon}</span>
-              <span className="flex-1 text-xs text-ink-700">{svc.title}</span>
-              <span className="text-xs font-medium text-ink-500 tabular-nums">
-                SGD {svc.priceSgd.toLocaleString()}
-              </span>
-            </div>
-          ))}
-          <div className="flex items-center justify-between px-4 py-2.5 bg-sage-50">
-            <span className="text-xs font-semibold text-ink-700">Total</span>
-            <span className="text-sm font-bold text-sage-900 tabular-nums">SGD {total.toLocaleString()}</span>
-          </div>
+      {/* Current stage description */}
+      {STAGE_DESC[p.status] && (
+        <div className="rounded-xl bg-cream-50 border border-cream-200 px-3.5 py-2.5 flex items-start gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-ink-400 shrink-0 mt-0.5">Now</span>
+          <p className="text-xs text-ink-700 leading-relaxed">{STAGE_DESC[p.status]}</p>
         </div>
       )}
 
-      {/* Mode-specific guidance */}
-      {mode === 'JWC' && isEmployer ? (
-        <JwcDocumentSection
-          placementId={p.id}
-          status={p.status}
-          onSubmitted={() => onStatusChange(p.id, 'DOCS_COLLECTION')}
-        />
-      ) : mode === 'JWC' ? (
-        <div className="rounded-2xl bg-sage-50 border border-sage-400/20 px-4 py-3 flex items-start gap-3">
-          <span className="text-lg shrink-0">{'🤝'}</span>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-sage-900 mb-0.5">JWC Employment Services</p>
-            <p className="text-xs text-ink-600 leading-relaxed">
-              The family is using JWC Employment Services to handle the work permit.
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className="rounded-2xl bg-cream-50 border border-cream-200 px-4 py-3 space-y-2">
-          <p className="text-sm font-medium text-ink-900">DIY checklist</p>
-          <ul className="space-y-1.5">
-            {DIY_STEPS.map((s) => (
-              <li key={s} className="flex items-start gap-2 text-xs text-ink-700">
-                <span className="mt-0.5 w-3.5 h-3.5 rounded border border-cream-300 bg-white shrink-0" />
-                {s}
-              </li>
+      {/* Services with no stage (e.g. Ongoing Support) — shown below the stepper */}
+      {mode === 'JWC' && (() => {
+        const always = p.selectedServices.filter((s) => !s.workflowStage);
+        if (always.length === 0) return null;
+        return (
+          <div className="flex flex-wrap gap-2">
+            {always.map((svc) => (
+              <span
+                key={svc.id}
+                title={svc.title}
+                className="inline-flex items-center gap-1.5 text-[10px] text-ink-600 bg-cream-100 rounded-full px-2.5 py-1"
+              >
+                <span>{svc.icon}</span>
+                {svc.title}
+              </span>
             ))}
-          </ul>
-          <a
-            href="https://www.mom.gov.sg/passes-and-permits/work-permit-for-foreign-domestic-worker"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block mt-1 text-xs text-sage-700 font-medium hover:text-sage-900"
-          >
-            MOM FDW guide &rarr;
-          </a>
-        </div>
+          </div>
+        );
+      })()}
+
+      {/* Employer: JWC doc upload + helper passport info */}
+      {isEmployer && mode === 'JWC' && (
+        <>
+          <JwcDocumentSection
+            placementId={p.id}
+            status={p.status}
+            docs={employerDocs}
+            employerDocsSubmittedAt={employerDocsSubmittedAt}
+            onDocUploaded={handleDocUploaded}
+            onSubmitted={(submittedAt, newStatus) => {
+              setEmployerDocsSubmittedAt(submittedAt);
+              if (newStatus !== p.status) onStatusChange(p.id, newStatus as PlacementView['status']);
+            }}
+          />
+          <PartnerDocsPanel docs={helperDocs} partnerLabel="Helper" docsLoaded={docs !== null} />
+        </>
+      )}
+
+      {/* Employer: DIY checklist + helper passport info */}
+      {isEmployer && mode === 'DIY' && (
+        <>
+          <div className="rounded-2xl bg-cream-50 border border-cream-200 px-4 py-3 space-y-2">
+            <p className="text-sm font-medium text-ink-900">DIY checklist</p>
+            <ul className="space-y-1.5">
+              {DIY_STEPS.map((s) => (
+                <li key={s} className="flex items-start gap-2 text-xs text-ink-700">
+                  <span className="mt-0.5 w-3.5 h-3.5 rounded border border-cream-300 bg-white shrink-0" />
+                  {s}
+                </li>
+              ))}
+            </ul>
+            <a
+              href="https://www.mom.gov.sg/passes-and-permits/work-permit-for-foreign-domestic-worker"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block mt-1 text-xs text-sage-700 font-medium hover:text-sage-900"
+            >
+              MOM FDW guide &rarr;
+            </a>
+          </div>
+          <PartnerDocsPanel docs={helperDocs} partnerLabel="Helper" docsLoaded={docs !== null} />
+        </>
+      )}
+
+      {/* Helper: passport upload + employer docs info */}
+      {!isEmployer && (
+        <>
+          {mode === 'JWC' && (
+            <div className="rounded-2xl bg-sage-50 border border-sage-400/20 px-4 py-3 flex items-start gap-3">
+              <span className="text-lg shrink-0">{'🤝'}</span>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-sage-900 mb-0.5">JWC Employment Services</p>
+                <p className="text-xs text-ink-600 leading-relaxed">
+                  The family is using JWC Employment Services to handle the work permit.
+                </p>
+              </div>
+            </div>
+          )}
+          <HelperPassportSection
+            placementId={p.id}
+            status={p.status}
+            mode={p.engagementMode}
+            docs={helperDocs}
+            helperDocsSubmittedAt={helperDocsSubmittedAt}
+            onDocUploaded={handleDocUploaded}
+            onSubmitted={(submittedAt, newStatus) => {
+              setHelperDocsSubmittedAt(submittedAt);
+              if (newStatus !== p.status) onStatusChange(p.id, newStatus as PlacementView['status']);
+            }}
+          />
+          {mode === 'JWC' && (
+            <PartnerDocsPanel docs={employerDocs} partnerLabel="Family" docsLoaded={docs !== null} />
+          )}
+        </>
       )}
     </div>
   );
@@ -442,13 +612,16 @@ function PlacementCard({
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function PersonAvatar({ src, name }: { src: string | null; name: string }) {
+function PersonAvatar({ src, name, size = 'md' }: { src: string | null; name: string; size?: 'sm' | 'md' }) {
   const initials = name.split(/\s+/).map((s) => s[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+  const cls = size === 'sm'
+    ? 'w-8 h-8 rounded-xl text-sm'
+    : 'w-14 h-14 rounded-2xl text-lg';
   if (src) {
-    return <img src={src} alt="" className="w-14 h-14 rounded-2xl object-cover bg-cream-200 shrink-0" />;
+    return <img src={src} alt="" className={`${cls} object-cover bg-cream-200 shrink-0`} />;
   }
   return (
-    <div className="w-14 h-14 rounded-2xl bg-sage-50 text-sage-900 flex items-center justify-center font-semibold text-lg shrink-0">
+    <div className={`${cls} bg-sage-50 text-sage-900 flex items-center justify-center font-semibold shrink-0`}>
       {initials || '·'}
     </div>
   );
@@ -466,24 +639,26 @@ const DOC_SLOTS: { type: PlacementDocType; label: string; hint: string }[] = [
 function JwcDocumentSection({
   placementId,
   status,
+  docs,
+  employerDocsSubmittedAt,
+  onDocUploaded,
   onSubmitted,
 }: {
   placementId: string;
   status: PlacementView['status'];
-  onSubmitted: () => void;
+  docs: PlacementDocumentView[];
+  employerDocsSubmittedAt: string | null;
+  onDocUploaded: (doc: PlacementDocumentView) => void;
+  onSubmitted: (employerDocsSubmittedAt: string, status: string) => void;
 }) {
-  const [docs, setDocs] = useState<PlacementDocumentView[] | null>(null);
   const [uploading, setUploading] = useState<PlacementDocType | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const submitted = status !== 'INITIATED';
+  const submitted = employerDocsSubmittedAt !== null || status !== 'INITIATED';
+  const waitingForHelper = submitted && status === 'INITIATED';
 
-  useEffect(() => {
-    fetchPlacementDocuments(placementId).then(setDocs).catch(() => setDocs([]));
-  }, [placementId]);
-
-  const uploaded = new Map(docs?.map((d) => [d.docType, d]));
+  const uploaded = new Map(docs.map((d) => [d.docType, d]));
   const allUploaded = DOC_SLOTS.every(({ type }) => uploaded.has(type));
 
   async function handleFile(type: PlacementDocType, file: File) {
@@ -492,10 +667,7 @@ function JwcDocumentSection({
     setError(null);
     try {
       const doc = await uploadPlacementDocument(placementId, type, file);
-      setDocs((prev) => {
-        const next = (prev ?? []).filter((d) => d.docType !== type);
-        return [...next, doc];
-      });
+      onDocUploaded(doc);
     } catch {
       setError('Upload failed. Please try again.');
     } finally {
@@ -508,8 +680,8 @@ function JwcDocumentSection({
     setSubmitting(true);
     setError(null);
     try {
-      await submitPlacementDocuments(placementId);
-      onSubmitted();
+      const result = await submitPlacementDocuments(placementId);
+      onSubmitted(result.employerDocsSubmittedAt, result.status);
     } catch {
       setError('Submission failed. Please try again.');
     } finally {
@@ -517,15 +689,23 @@ function JwcDocumentSection({
     }
   }
 
-  // Once submitted, show confirmation banner instead of the upload form
+  // Once submitted, show confirmation or waiting banner
   if (submitted) {
-    return (
+    return waitingForHelper ? (
+      <div className="rounded-2xl bg-butter-50 border border-butter-200 px-5 py-4 flex items-start gap-3">
+        <span className="text-xl shrink-0 mt-0.5">⏳</span>
+        <p className="text-sm text-ink-800 leading-relaxed">
+          Your documents have been submitted. Waiting for the helper to upload and submit
+          their passport before the hiring moves to the next stage.
+        </p>
+      </div>
+    ) : (
       <div className="rounded-2xl bg-sage-50 border border-sage-200 px-5 py-4 flex items-start gap-3">
         <span className="text-xl shrink-0 mt-0.5">✅</span>
         <p className="text-sm text-sage-900 leading-relaxed">
-          Our administrative team is currently reviewing your submitted documentation. Once verified,
-          your application will automatically progress to the{' '}
-          <span className="font-semibold">MOM APPLICATION</span>.
+          All documents submitted. Our administrative team is now reviewing your application
+          and will progress it to the{' '}
+          <span className="font-semibold">MOM APPLICATION</span> stage once verified.
         </p>
       </div>
     );
@@ -571,10 +751,12 @@ function JwcDocumentSection({
                   <div className="text-sm font-medium text-ink-900">{label}</div>
                   <div className="text-xs text-ink-400 mt-0.5">
                     {existing ? (
-                      <a href={existing.viewUrl} target="_blank" rel="noopener noreferrer"
-                        className="text-sage-700 hover:text-sage-900 font-medium">
-                        {existing.originalName}
-                      </a>
+                      existing.viewUrl
+                        ? <a href={existing.viewUrl} target="_blank" rel="noopener noreferrer"
+                            className="text-sage-700 hover:text-sage-900 font-medium">
+                            {existing.originalName}
+                          </a>
+                        : <span className="text-ink-600">{existing.originalName}</span>
                     ) : hint}
                   </div>
                 </div>
@@ -626,6 +808,211 @@ function JwcDocumentSection({
     </div>
   );
 }
+
+// ── Helper passport section ───────────────────────────────────────────────────
+
+const PASSPORT_SLOT = { type: 'PASSPORT' as PlacementDocType, label: 'Passport', hint: 'Bio-data page — PDF or image, max 10 MB' };
+
+function HelperPassportSection({
+  placementId,
+  status,
+  mode,
+  docs,
+  helperDocsSubmittedAt,
+  onDocUploaded,
+  onSubmitted,
+}: {
+  placementId: string;
+  status: PlacementView['status'];
+  mode: string;
+  docs: PlacementDocumentView[];
+  helperDocsSubmittedAt: string | null;
+  onDocUploaded: (doc: PlacementDocumentView) => void;
+  onSubmitted: (submittedAt: string, status: string) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const existing = docs.find((d) => d.docType === 'PASSPORT');
+  const locked = helperDocsSubmittedAt !== null || status !== 'INITIATED';
+  const waitingForFamily = locked && status === 'INITIATED' && mode === 'JWC';
+
+  async function handleFile(file: File) {
+    if (file.size > 10 * 1024 * 1024) { setError('File must be under 10 MB.'); return; }
+    setUploading(true);
+    setError(null);
+    try {
+      const doc = await uploadPlacementDocument(placementId, 'PASSPORT', file);
+      onDocUploaded(doc);
+    } catch {
+      setError('Upload failed. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleSubmit() {
+    if (!existing || submitting) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const result = await submitHelperDocuments(placementId);
+      onSubmitted(result.helperDocsSubmittedAt, result.status);
+    } catch {
+      setError('Submission failed. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (locked) {
+    return waitingForFamily ? (
+      <div className="rounded-2xl bg-butter-50 border border-butter-200 px-5 py-4 flex items-start gap-3">
+        <span className="text-xl shrink-0 mt-0.5">⏳</span>
+        <p className="text-sm text-ink-800 leading-relaxed">
+          Your passport has been submitted. Waiting for the family to submit their documents
+          before the hiring moves to the next stage.
+        </p>
+      </div>
+    ) : (
+      <div className="rounded-2xl bg-sage-50 border border-sage-200 px-5 py-4 flex items-start gap-3">
+        <span className="text-xl shrink-0 mt-0.5">✅</span>
+        <p className="text-sm text-sage-900 leading-relaxed">
+          Your passport has been submitted and is under review by our team.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="rounded-2xl border border-cream-200 bg-white overflow-hidden">
+        <div className="px-4 py-3 border-b border-cream-100">
+          <p className="text-sm font-medium text-ink-900">Upload your passport</p>
+          <p className="text-xs text-ink-500 mt-0.5">Required for work permit processing. PDF or image, max 10 MB.</p>
+        </div>
+        {error && (
+          <div className="px-4 py-2 text-xs text-clay-600 bg-blush-50 border-b border-blush-100">{error}</div>
+        )}
+        <div className="flex items-center gap-3 px-4 py-3">
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium text-ink-900">{PASSPORT_SLOT.label}</div>
+            <div className="text-xs text-ink-400 mt-0.5">
+              {existing ? (
+                existing.viewUrl
+                  ? <a href={existing.viewUrl} target="_blank" rel="noopener noreferrer"
+                      className="text-sage-700 hover:text-sage-900 font-medium">
+                      {existing.originalName}
+                    </a>
+                  : <span className="text-ink-600">{existing.originalName}</span>
+              ) : PASSPORT_SLOT.hint}
+            </div>
+          </div>
+          <div className="shrink-0 flex items-center gap-2">
+            {existing && (
+              <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-sage-100 text-sage-700">
+                Uploaded
+              </span>
+            )}
+            <label className={`cursor-pointer text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
+              uploading ? 'opacity-40 pointer-events-none' : ''
+            } ${existing
+              ? 'border-cream-300 text-ink-500 hover:border-sage-400 hover:text-sage-700'
+              : 'bg-sage-700 text-white border-sage-700 hover:bg-sage-800'
+            }`}>
+              {uploading ? 'Uploading…' : existing ? 'Replace' : 'Upload'}
+              <input
+                type="file"
+                accept=".pdf,image/*"
+                className="sr-only"
+                disabled={uploading}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void handleFile(f);
+                  e.target.value = '';
+                }}
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className="px-4 py-3 border-t border-cream-100 bg-cream-50">
+          {!existing && (
+            <p className="text-xs text-ink-400 mb-2">Upload your passport before submitting.</p>
+          )}
+          <button
+            type="button"
+            onClick={() => void handleSubmit()}
+            disabled={!existing || submitting}
+            className="w-full py-3 rounded-xl bg-sage-900 text-cream-100 text-sm font-medium hover:bg-sage-800 disabled:opacity-40 transition-colors"
+          >
+            {submitting ? 'Submitting…' : 'Submit passport for review →'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Partner docs panel (metadata only, no download) ───────────────────────────
+
+const DOC_TYPE_LABELS: Record<PlacementDocType, string> = {
+  NRIC_FRONT: 'NRIC — Front',
+  NRIC_BACK:  'NRIC — Back',
+  NOA:        'Notice of Assessment',
+  PASSPORT:   'Passport',
+};
+
+function fmtBytes(n: number) {
+  return n >= 1024 * 1024
+    ? `${(n / (1024 * 1024)).toFixed(1)} MB`
+    : `${(n / 1024).toFixed(0)} KB`;
+}
+
+function PartnerDocsPanel({
+  docs,
+  partnerLabel,
+  docsLoaded,
+}: {
+  docs: PlacementDocumentView[];
+  partnerLabel: string;
+  docsLoaded: boolean;
+}) {
+  if (!docsLoaded) return null;
+
+  return (
+    <div className="rounded-2xl border border-cream-200 bg-white overflow-hidden">
+      <div className="px-4 py-3 border-b border-cream-100 flex items-center gap-2">
+        <span className="text-base">📎</span>
+        <p className="text-sm font-medium text-ink-900">{partnerLabel} documents</p>
+        <span className="text-[10px] uppercase tracking-widest text-ink-400 ml-auto">view only</span>
+      </div>
+      {docs.length === 0 ? (
+        <div className="px-4 py-3 text-xs text-ink-400 italic">No documents uploaded yet.</div>
+      ) : (
+        <div className="divide-y divide-cream-100">
+          {docs.map((d) => (
+            <div key={d.id} className="flex items-center gap-3 px-4 py-3">
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-ink-800">{DOC_TYPE_LABELS[d.docType] ?? d.docType}</div>
+                <div className="text-xs text-ink-400 mt-0.5">
+                  {d.originalName} &middot; {fmtBytes(d.sizeBytes)} &middot;{' '}
+                  {new Date(d.uploadedAt).toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </div>
+              </div>
+              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-cream-100 text-ink-500">
+                Uploaded
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── DIY steps ─────────────────────────────────────────────────────────────────
 
 const DIY_STEPS = [
   "Collect helper's passport and latest IPA letter (if applicable)",

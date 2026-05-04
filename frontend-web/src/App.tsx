@@ -16,9 +16,13 @@ import PricingPage from './pages/PricingPage';
 import AdminServicesPage from './pages/AdminServicesPage';
 import AdminOverviewPage from './pages/AdminOverviewPage';
 import AdminManagePlacementsPage from './pages/AdminManagePlacementsPage';
+import AdminManageHolidaysPage from './pages/AdminManageHolidaysPage';
+import ActiveEmploymentPage from './pages/ActiveEmploymentPage';
 import { useAuthStore } from './lib/auth';
 import { listConversations } from './lib/chat';
+import { fetchAdminNotifications, fetchUserNotifications } from './lib/admin';
 import { useToastStore } from './lib/toasts';
+import { useNotificationStore } from './lib/notificationStore';
 
 /**
  * Top-level routing. Marketing routes (/, /login, /signup) are public; everything
@@ -26,11 +30,13 @@ import { useToastStore } from './lib/toasts';
  * a stale token doesn't render an authenticated UI for a deleted user.
  */
 const CONV_POLL_MS = 10_000;
+const NOTIF_POLL_MS = 15_000;
 
 export default function App() {
-  const { hydrated, accessToken, fetchMe } = useAuthStore();
+  const { hydrated, accessToken, fetchMe, user } = useAuthStore();
   const loc = useLocation();
   const { push: pushToast, setTotalUnread } = useToastStore();
+  const { setNotifications } = useNotificationStore();
   const prevUnread = useRef<Record<string, number>>({});
   const pathnameRef = useRef(loc.pathname);
   pathnameRef.current = loc.pathname;
@@ -81,6 +87,61 @@ export default function App() {
     return () => { cancelled = true; clearInterval(h); };
   }, [accessToken, pushToast, setTotalUnread]);
 
+  // User notification polling (employer / helper) — fires a toast for PLACEMENT_ACTIVE
+  useEffect(() => {
+    if (!accessToken || user?.role === 'ADMIN') return;
+    let cancelled = false;
+    let prevUnreadCount = 0;
+    let bootstrapped = false;
+
+    const tick = async () => {
+      try {
+        const items = await fetchUserNotifications();
+        if (cancelled) return;
+        setNotifications(items);
+        const unread = items.filter((n) => !n.readAt).length;
+        if (bootstrapped && unread > prevUnreadCount) {
+          const newest = items.find((n) => !n.readAt);
+          if (newest?.type === 'PLACEMENT_ACTIVE') {
+            pushToast('Your hiring is now active! View My Employment.', '/employment');
+          }
+        }
+        prevUnreadCount = unread;
+        bootstrapped = true;
+      } catch { /* ignore */ }
+    };
+    tick();
+    const h = setInterval(tick, NOTIF_POLL_MS);
+    return () => { cancelled = true; clearInterval(h); };
+  }, [accessToken, user?.role, pushToast, setNotifications]);
+
+  // Admin notification polling — fires a toast when new unread notifications arrive
+  useEffect(() => {
+    if (!accessToken || user?.role !== 'ADMIN') return;
+    let cancelled = false;
+    let prevUnreadCount = 0;
+    let bootstrapped = false;
+
+    const tick = async () => {
+      try {
+        const items = await fetchAdminNotifications();
+        if (cancelled) return;
+        setNotifications(items);
+        const unread = items.filter((n) => !n.readAt).length;
+        if (bootstrapped && unread > prevUnreadCount) {
+          pushToast('Documents ready for review — both parties have submitted.', '/admin/placements');
+        }
+        prevUnreadCount = unread;
+        bootstrapped = true;
+      } catch {
+        // silently ignore
+      }
+    };
+    tick();
+    const h = setInterval(tick, NOTIF_POLL_MS);
+    return () => { cancelled = true; clearInterval(h); };
+  }, [accessToken, user?.role, pushToast, setNotifications]);
+
   return (
     <Layout>
       <Routes>
@@ -98,10 +159,12 @@ export default function App() {
         <Route path="/reviews/me" element={<RequireAuth><MyReviewsPage /></RequireAuth>} />
         <Route path="/reviews/write/:id" element={<RequireAuth><WriteReviewPage /></RequireAuth>} />
         <Route path="/manage" element={<RequireAuth><ManageHelperPage /></RequireAuth>} />
+        <Route path="/employment" element={<RequireAuth><ActiveEmploymentPage /></RequireAuth>} />
         <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
-        <Route path="/admin/services" element={<RequireAuth><AdminServicesPage /></RequireAuth>} />
-        <Route path="/admin/overview" element={<RequireAuth><AdminOverviewPage /></RequireAuth>} />
-        <Route path="/admin/placements" element={<RequireAuth><AdminManagePlacementsPage /></RequireAuth>} />
+        <Route path="/admin/services" element={<RequireAdmin><AdminServicesPage /></RequireAdmin>} />
+        <Route path="/admin/overview" element={<RequireAdmin><AdminOverviewPage /></RequireAdmin>} />
+        <Route path="/admin/placements" element={<RequireAdmin><AdminManagePlacementsPage /></RequireAdmin>} />
+        <Route path="/admin/holidays" element={<RequireAdmin><AdminManageHolidaysPage /></RequireAdmin>} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>
@@ -123,6 +186,26 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   }
   if (!accessToken) {
     return <Navigate to={`/login?next=${encodeURIComponent(loc.pathname)}`} replace />;
+  }
+  return <>{children}</>;
+}
+
+function RequireAdmin({ children }: { children: React.ReactNode }) {
+  const { hydrated, accessToken, user } = useAuthStore();
+  const loc = useLocation();
+
+  if (!hydrated) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 md:px-6 py-20 text-center text-ink-500">
+        Loading…
+      </div>
+    );
+  }
+  if (!accessToken) {
+    return <Navigate to={`/login?next=${encodeURIComponent(loc.pathname)}`} replace />;
+  }
+  if (user?.role !== 'ADMIN') {
+    return <Navigate to="/matches" replace />;
   }
   return <>{children}</>;
 }

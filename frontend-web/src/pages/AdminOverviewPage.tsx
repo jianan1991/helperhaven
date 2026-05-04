@@ -85,7 +85,7 @@ export default function AdminOverviewPage() {
 
   const tabs: { id: Tab; label: string; count?: number }[] = [
     { id: 'users', label: 'Users', count: stats?.totalUsers },
-    { id: 'placements', label: 'Placements', count: stats?.placements },
+    { id: 'placements', label: 'Hirings', count: stats?.placements },
     { id: 'chats', label: 'Chats', count: stats?.conversations },
     { id: 'helpers', label: 'Helper profiles', count: stats?.helperProfiles },
     { id: 'employers', label: 'Employer profiles', count: stats?.employerProfiles },
@@ -96,7 +96,7 @@ export default function AdminOverviewPage() {
       <div className="mb-8">
         <div className="text-xs uppercase tracking-widest text-sage-700">Admin · god mode</div>
         <h1 className="serif text-4xl font-bold text-ink-900 mt-2">Platform Overview</h1>
-        <p className="mt-2 text-ink-500 text-sm">All users, conversations, placements and profiles in one place.</p>
+        <p className="mt-2 text-ink-500 text-sm">All users, conversations, hirings and profiles in one place.</p>
       </div>
 
       {error && (
@@ -111,7 +111,7 @@ export default function AdminOverviewPage() {
         <StatCard label="Employers" value={stats?.employers} />
         <StatCard label="Helpers" value={stats?.helpers} />
         <StatCard label="Conversations" value={stats?.conversations} />
-        <StatCard label="Placements" value={stats?.placements} />
+        <StatCard label="Hirings" value={stats?.placements} />
         <StatCard label="Helper profiles" value={stats?.helperProfiles} />
         <StatCard label="Employer profiles" value={stats?.employerProfiles} />
       </div>
@@ -317,7 +317,7 @@ function UsersTab({
 function PlacementsTab({ rows, search }: { rows: AdminPlacement[] | null; search: string }) {
   if (!rows) return <Loading />;
   const filtered = filterRows(rows, search, ['employerEmail', 'employerName', 'helperEmail', 'helperName', 'status', 'engagementMode']);
-  if (!filtered.length) return <Empty label="placements" />;
+  if (!filtered.length) return <Empty label="hirings" />;
   return (
     <div className="rounded-2xl border border-cream-200 bg-white overflow-x-auto shadow-soft">
       <table className="w-full text-sm">

@@ -43,6 +43,7 @@ export interface AdminSelectedService {
   icon: string;
   title: string;
   priceSgd: number;
+  workflowStage: string | null;
 }
 
 export interface AdminPlacement {
@@ -55,6 +56,8 @@ export interface AdminPlacement {
   helperName: string;
   engagementMode: string;
   status: string;
+  employerDocsSubmittedAt: string | null;
+  helperDocsSubmittedAt: string | null;
   createdAt: string;
   updatedAt: string;
   selectedServices: AdminSelectedService[];
@@ -137,13 +140,40 @@ export const updateAdminPlacementStatus = (placementId: string, status: string) 
 
 export interface AdminPlacementDocument {
   id: string;
-  docType: 'NRIC_FRONT' | 'NRIC_BACK' | 'NOA';
+  docType: 'NRIC_FRONT' | 'NRIC_BACK' | 'NOA' | 'PASSPORT';
   originalName: string;
   mimeType: string;
   sizeBytes: number;
   uploadedAt: string;
-  viewUrl: string;
+  uploadedByRole: 'EMPLOYER' | 'HELPER';
+  viewUrl: string | null;
 }
 
 export const fetchPlacementDocuments = (placementId: string) =>
   api.get<AdminPlacementDocument[]>(`/placements/${placementId}/documents`).then((r) => r.data);
+
+export interface AdminNotification {
+  id: string;
+  type: string;
+  title: string;
+  body: string | null;
+  relatedPlacementId: string | null;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export const fetchAdminNotifications = () =>
+  api.get<AdminNotification[]>('/admin/notifications').then((r) => r.data);
+
+export const markNotificationRead = (id: string) =>
+  api.post<AdminNotification>(`/admin/notifications/${id}/read`).then((r) => r.data);
+
+export const markAllNotificationsRead = () =>
+  api.post('/admin/notifications/read-all');
+
+// User-facing notifications (employer / helper)
+export const fetchUserNotifications = () =>
+  api.get<AdminNotification[]>('/notifications').then((r) => r.data);
+
+export const markAllUserNotificationsRead = () =>
+  api.post('/notifications/read-all');

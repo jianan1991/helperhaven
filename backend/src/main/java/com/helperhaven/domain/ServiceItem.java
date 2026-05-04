@@ -41,4 +41,8 @@ public class ServiceItem {
 
     @Column(nullable = false)
     private boolean active;
+
+    /** INITIATED | DOCS_COLLECTION | MOM_SUBMITTED | IPA_ISSUED | HELPER_ARRIVAL | ACTIVE — or null if not stage-specific */
+    @Column(name = "workflow_stage", length = 30)
+    private String workflowStage;
 }

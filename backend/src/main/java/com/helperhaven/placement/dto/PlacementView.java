@@ -14,6 +14,8 @@ public record PlacementView(
         String helperDisplayName,
         String helperPhotoUrl,
         String employerDisplayName,
+        Instant employerDocsSubmittedAt,
+        Instant helperDocsSubmittedAt,
         Instant createdAt,
         Instant updatedAt,
         List<SelectedServiceView> selectedServices

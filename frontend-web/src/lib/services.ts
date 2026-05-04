@@ -8,6 +8,7 @@ export interface ServiceItem {
   priceSgd: number;
   sortOrder: number;
   active: boolean;
+  workflowStage: string | null;
 }
 
 /**
@@ -24,6 +25,7 @@ export const CATALOGUE_DEFAULTS: ServiceItem[] = [
     priceSgd: 400,
     sortOrder: 1,
     active: true,
+    workflowStage: 'MOM_SUBMITTED',
   },
   {
     id: 'a1000000-0000-0000-0000-000000000002',
@@ -33,6 +35,7 @@ export const CATALOGUE_DEFAULTS: ServiceItem[] = [
     priceSgd: 290,
     sortOrder: 2,
     active: true,
+    workflowStage: 'IPA_ISSUED',
   },
   {
     id: 'a1000000-0000-0000-0000-000000000003',
@@ -42,6 +45,7 @@ export const CATALOGUE_DEFAULTS: ServiceItem[] = [
     priceSgd: 180,
     sortOrder: 3,
     active: true,
+    workflowStage: 'HELPER_ARRIVAL',
   },
   {
     id: 'a1000000-0000-0000-0000-000000000004',
@@ -51,6 +55,7 @@ export const CATALOGUE_DEFAULTS: ServiceItem[] = [
     priceSgd: 100,
     sortOrder: 4,
     active: true,
+    workflowStage: 'HELPER_ARRIVAL',
   },
   {
     id: 'a1000000-0000-0000-0000-000000000005',
@@ -60,6 +65,7 @@ export const CATALOGUE_DEFAULTS: ServiceItem[] = [
     priceSgd: 120,
     sortOrder: 5,
     active: true,
+    workflowStage: 'HELPER_ARRIVAL',
   },
   {
     id: 'a1000000-0000-0000-0000-000000000006',
@@ -69,6 +75,7 @@ export const CATALOGUE_DEFAULTS: ServiceItem[] = [
     priceSgd: 150,
     sortOrder: 6,
     active: true,
+    workflowStage: null,
   },
 ];
 
@@ -94,5 +101,10 @@ export async function listServices(all = false): Promise<ServiceItem[]> {
 
 export async function updateServicePrice(id: string, priceSgd: number): Promise<ServiceItem> {
   const { data } = await api.put<ServiceItem>(`/services/${id}/price`, { priceSgd });
+  return data;
+}
+
+export async function updateServiceWorkflowStage(id: string, workflowStage: string | null): Promise<ServiceItem> {
+  const { data } = await api.put<ServiceItem>(`/services/${id}/workflow-stage`, { workflowStage });
   return data;
 }

@@ -3,6 +3,7 @@ package com.helperhaven.catalog;
 import com.helperhaven.auth.JwtAuthFilter;
 import com.helperhaven.catalog.dto.ServiceItemView;
 import com.helperhaven.catalog.dto.ServicePriceRequest;
+import com.helperhaven.catalog.dto.ServiceWorkflowStageRequest;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,5 +45,14 @@ public class CatalogController {
             @Valid @RequestBody ServicePriceRequest req
     ) {
         return service.updatePrice(id, req.priceSgd(), JwtAuthFilter.currentUserId());
+    }
+
+    /** Admin: assign or clear the workflow stage for a service. */
+    @PutMapping("/{id}/workflow-stage")
+    public ServiceItemView updateWorkflowStage(
+            @PathVariable UUID id,
+            @RequestBody ServiceWorkflowStageRequest req
+    ) {
+        return service.updateWorkflowStage(id, req.workflowStage(), JwtAuthFilter.currentUserId());
     }
 }

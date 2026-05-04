@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -29,6 +30,8 @@ public class AdminService {
     private final ServiceItemRepository serviceItems;
     private final HelperProfileRepository helpers;
     private final EmployerProfileRepository employers;
+    private final TerminationRequestRepository terminationRequests;
+    private final com.helperhaven.notification.NotificationService notifService;
 
     public AdminService(
             UserRepository users,
@@ -38,7 +41,9 @@ public class AdminService {
             PlacementServiceItemRepository placementServiceItems,
             ServiceItemRepository serviceItems,
             HelperProfileRepository helpers,
-            EmployerProfileRepository employers
+            EmployerProfileRepository employers,
+            TerminationRequestRepository terminationRequests,
+            com.helperhaven.notification.NotificationService notifService
     ) {
         this.users = users;
         this.conversations = conversations;
@@ -48,6 +53,8 @@ public class AdminService {
         this.serviceItems = serviceItems;
         this.helpers = helpers;
         this.employers = employers;
+        this.terminationRequests = terminationRequests;
+        this.notifService = notifService;
     }
 
     public AdminStatsView getStats() {
@@ -219,7 +226,7 @@ public class AdminService {
                             .map(psi -> {
                                 ServiceItem svc = serviceMap.get(psi.getId().getServiceId());
                                 return svc != null
-                                        ? new SelectedServiceView(svc.getId(), svc.getIcon(), svc.getTitle(), psi.getPriceSgd())
+                                        ? new SelectedServiceView(svc.getId(), svc.getIcon(), svc.getTitle(), psi.getPriceSgd(), svc.getWorkflowStage())
                                         : null;
                             })
                             .filter(Objects::nonNull)
@@ -234,6 +241,8 @@ public class AdminService {
                             displayNames.getOrDefault(p.getHelperId(), helper != null ? helper.getEmail() : "?"),
                             p.getEngagementMode(),
                             p.getStatus(),
+                            p.getEmployerDocsSubmittedAt(),
+                            p.getHelperDocsSubmittedAt(),
                             p.getCreatedAt(),
                             p.getUpdatedAt(),
                             svcs
@@ -251,7 +260,17 @@ public class AdminService {
                 .orElseThrow(() -> new NoSuchElementException("Placement not found: " + placementId));
         p.setStatus(newStatus);
         p.setUpdatedAt(Instant.now());
+        boolean becomingActive = "ACTIVE".equals(newStatus) && !"ACTIVE".equals(p.getStatus());
+        if (becomingActive && p.getEmploymentStartDate() == null) {
+            p.setEmploymentStartDate(LocalDate.now());
+            if (p.getEmploymentEndDate() == null) {
+                p.setEmploymentEndDate(LocalDate.now().plusYears(2));
+            }
+        }
         placements.save(p);
+        if (becomingActive) {
+            notifService.notifyPartiesPlacementActive(p.getId());
+        }
 
         Map<UUID, User> userMap = buildUserMap();
         Map<UUID, String> displayNames = buildDisplayNames();
@@ -265,7 +284,7 @@ public class AdminService {
                 .map(psi -> {
                     ServiceItem svc = serviceMap.get(psi.getId().getServiceId());
                     return svc != null
-                            ? new SelectedServiceView(svc.getId(), svc.getIcon(), svc.getTitle(), psi.getPriceSgd())
+                            ? new SelectedServiceView(svc.getId(), svc.getIcon(), svc.getTitle(), psi.getPriceSgd(), svc.getWorkflowStage())
                             : null;
                 })
                 .filter(Objects::nonNull)
@@ -281,6 +300,8 @@ public class AdminService {
                 displayNames.getOrDefault(p.getHelperId(), helper != null ? helper.getEmail() : "?"),
                 p.getEngagementMode(),
                 p.getStatus(),
+                p.getEmployerDocsSubmittedAt(),
+                p.getHelperDocsSubmittedAt(),
                 p.getCreatedAt(),
                 p.getUpdatedAt(),
                 svcs
@@ -335,6 +356,60 @@ public class AdminService {
                     );
                 })
                 .toList();
+    }
+
+    public List<AdminTerminationView> listTerminationRequests() {
+        Map<UUID, User> userMap = buildUserMap();
+        Map<UUID, String> displayNames = buildDisplayNames();
+        return terminationRequests.findAllByOrderByCreatedAtDesc().stream()
+                .map(tr -> {
+                    Placement p = placements.findById(tr.getPlacementId()).orElse(null);
+                    String employerName = p != null ? displayNames.getOrDefault(p.getEmployerId(),
+                            userMap.getOrDefault(p.getEmployerId(), null) != null
+                                    ? userMap.get(p.getEmployerId()).getEmail() : "?") : "?";
+                    String helperName = p != null ? displayNames.getOrDefault(p.getHelperId(),
+                            userMap.getOrDefault(p.getHelperId(), null) != null
+                                    ? userMap.get(p.getHelperId()).getEmail() : "?") : "?";
+                    return new AdminTerminationView(
+                            tr.getId(), tr.getPlacementId(),
+                            p != null ? p.getEngagementMode() : "?",
+                            employerName, helperName,
+                            tr.getReason(), tr.getStatus(),
+                            tr.getAdminNotes(), tr.getCreatedAt(), tr.getResolvedAt()
+                    );
+                })
+                .toList();
+    }
+
+    @Transactional
+    public AdminTerminationView resolveTermination(UUID terminationId, String adminNotes, boolean resolved) {
+        TerminationRequest tr = terminationRequests.findById(terminationId)
+                .orElseThrow(() -> new NoSuchElementException("Termination request not found: " + terminationId));
+        Map<UUID, User> userMap = buildUserMap();
+        Map<UUID, String> displayNames = buildDisplayNames();
+        Placement p = placements.findById(tr.getPlacementId()).orElse(null);
+
+        if (resolved) {
+            tr.setStatus("RESOLVED");
+            tr.setResolvedAt(Instant.now());
+            if (p != null) {
+                p.setStatus("TERMINATED");
+                p.setUpdatedAt(Instant.now());
+                placements.save(p);
+            }
+        }
+        if (adminNotes != null) tr.setAdminNotes(adminNotes);
+        terminationRequests.save(tr);
+
+        String employerName = p != null ? displayNames.getOrDefault(p.getEmployerId(), "?") : "?";
+        String helperName = p != null ? displayNames.getOrDefault(p.getHelperId(), "?") : "?";
+        return new AdminTerminationView(
+                tr.getId(), tr.getPlacementId(),
+                p != null ? p.getEngagementMode() : "?",
+                employerName, helperName,
+                tr.getReason(), tr.getStatus(),
+                tr.getAdminNotes(), tr.getCreatedAt(), tr.getResolvedAt()
+        );
     }
 
     // ── private helpers ──

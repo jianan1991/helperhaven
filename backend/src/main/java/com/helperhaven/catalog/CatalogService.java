@@ -47,6 +47,16 @@ public class CatalogService {
         return ServiceItemView.from(repo.save(s));
     }
 
+    @Transactional
+    public ServiceItemView updateWorkflowStage(UUID serviceId, String workflowStage, UUID callerId) {
+        requireAdmin(callerId);
+        var s = repo.findById(serviceId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Service not found"));
+        // Treat blank string as "no stage"
+        s.setWorkflowStage(workflowStage == null || workflowStage.isBlank() ? null : workflowStage);
+        return ServiceItemView.from(repo.save(s));
+    }
+
     private void requireAdmin(UUID userId) {
         User u = users.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not found"));

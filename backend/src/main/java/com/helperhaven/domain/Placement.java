@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
@@ -42,9 +43,25 @@ public class Placement {
     @Column(nullable = false, length = 30)
     private String status;
 
+    @Column(name = "employer_docs_submitted_at")
+    private Instant employerDocsSubmittedAt;
+
+    @Column(name = "helper_docs_submitted_at")
+    private Instant helperDocsSubmittedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    @Column(name = "employment_start_date")
+    private LocalDate employmentStartDate;
+
+    @Column(name = "employment_end_date")
+    private LocalDate employmentEndDate;
+
+    /** 0=Mon … 6=Sun; null until employer configures it */
+    @Column(name = "rest_day_of_week")
+    private Integer restDayOfWeek;
 }

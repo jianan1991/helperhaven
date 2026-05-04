@@ -1,9 +1,11 @@
 package com.helperhaven.admin;
 
 import com.helperhaven.admin.dto.*;
+import com.helperhaven.admin.dto.AdminTerminationView;
 import com.helperhaven.auth.JwtAuthFilter;
 import com.helperhaven.auth.UserPrincipal;
 import com.helperhaven.domain.enums.UserRole;
+import com.helperhaven.notification.NotificationService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -21,9 +23,11 @@ import java.util.UUID;
 public class AdminController {
 
     private final AdminService admin;
+    private final NotificationService notifService;
 
-    public AdminController(AdminService admin) {
+    public AdminController(AdminService admin, NotificationService notifService) {
         this.admin = admin;
+        this.notifService = notifService;
     }
 
     @GetMapping("/stats")
@@ -110,6 +114,43 @@ public class AdminController {
         return admin.listEmployers();
     }
 
+    @GetMapping("/notifications")
+    public List<NotificationService.NotificationView> notifications(HttpServletResponse res) throws IOException {
+        if (!isAdmin()) { res.sendError(403); return null; }
+        return notifService.listForUser(JwtAuthFilter.currentUserId());
+    }
+
+    @PostMapping("/notifications/{id}/read")
+    public NotificationService.NotificationView markRead(
+            @PathVariable UUID id,
+            HttpServletResponse res
+    ) throws IOException {
+        if (!isAdmin()) { res.sendError(403); return null; }
+        return notifService.markRead(id, JwtAuthFilter.currentUserId());
+    }
+
+    @PostMapping("/notifications/read-all")
+    public void markAllRead(HttpServletResponse res) throws IOException {
+        if (!isAdmin()) { res.sendError(403); return; }
+        notifService.markAllRead(JwtAuthFilter.currentUserId());
+    }
+
+    @GetMapping("/termination-requests")
+    public List<AdminTerminationView> terminationRequests(HttpServletResponse res) throws IOException {
+        if (!isAdmin()) { res.sendError(403); return null; }
+        return admin.listTerminationRequests();
+    }
+
+    @PutMapping("/termination-requests/{id}")
+    public AdminTerminationView resolveTermination(
+            @PathVariable UUID id,
+            @RequestBody TerminationResolveRequest req,
+            HttpServletResponse res
+    ) throws IOException {
+        if (!isAdmin()) { res.sendError(403); return null; }
+        return admin.resolveTermination(id, req.adminNotes(), req.resolved());
+    }
+
     private static boolean isAdmin() {
         Object p = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return p instanceof UserPrincipal up && up.role() == UserRole.ADMIN;
@@ -117,4 +158,5 @@ public class AdminController {
 
     public record StatusRequest(String status) {}
     public record MessageRequest(String body) {}
+    public record TerminationResolveRequest(String adminNotes, boolean resolved) {}
 }

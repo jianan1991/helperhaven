@@ -99,12 +99,18 @@ public class PlacementService {
         var existing = placements.findByOfferId(offerId);
         if (existing.isPresent()) {
             Placement p = existing.get();
-            if (!"INITIATED".equals(p.getStatus()) || engagementMode.equals(p.getEngagementMode())) {
+            // Once past INITIATED the mode and services are locked
+            if (!"INITIATED".equals(p.getStatus())) {
                 return toView(p);
             }
-            p.setEngagementMode(engagementMode);
-            p.setUpdatedAt(Instant.now());
-            placements.save(p);
+            // Update mode if changed
+            if (!engagementMode.equals(p.getEngagementMode())) {
+                p.setEngagementMode(engagementMode);
+                p.setUpdatedAt(Instant.now());
+                placements.save(p);
+            }
+            // Always re-sync services for INITIATED placements so a re-confirm
+            // can fix a placement that was created without services
             placementServiceItems.deleteAll(placementServiceItems.findByIdPlacementId(p.getId()));
             List<UUID> newServiceIds = req.selectedServiceIds() != null ? req.selectedServiceIds() : Collections.emptyList();
             for (UUID serviceId : newServiceIds) {
@@ -174,7 +180,8 @@ public class PlacementService {
                             psi.getId().getServiceId(),
                             svc != null ? svc.getIcon() : "",
                             svc != null ? svc.getTitle() : "Service",
-                            psi.getPriceSgd()
+                            psi.getPriceSgd(),
+                            svc != null ? svc.getWorkflowStage() : null
                     );
                 })
                 .toList();
@@ -183,6 +190,8 @@ public class PlacementService {
                 p.getId(), p.getOfferId(), p.getEmployerId(), p.getHelperId(),
                 p.getEngagementMode(), p.getStatus(),
                 helperName, helperPhoto, employerName,
+                p.getEmployerDocsSubmittedAt(),
+                p.getHelperDocsSubmittedAt(),
                 p.getCreatedAt(), p.getUpdatedAt(),
                 selected
         );

@@ -16,6 +16,8 @@ public record AdminPlacementView(
         String helperName,
         String engagementMode,
         String status,
+        Instant employerDocsSubmittedAt,
+        Instant helperDocsSubmittedAt,
         Instant createdAt,
         Instant updatedAt,
         List<SelectedServiceView> selectedServices

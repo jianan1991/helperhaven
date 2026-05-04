@@ -8,13 +8,15 @@ export type PlacementStatus =
   | 'MOM_SUBMITTED'
   | 'IPA_ISSUED'
   | 'HELPER_ARRIVAL'
-  | 'ACTIVE';
+  | 'ACTIVE'
+  | 'TERMINATED';
 
 export interface SelectedService {
   id: string;
   icon: string;
   title: string;
   priceSgd: number;
+  workflowStage: string | null;
 }
 
 export interface PlacementView {
@@ -27,6 +29,8 @@ export interface PlacementView {
   helperDisplayName: string;
   helperPhotoUrl: string | null;
   employerDisplayName: string | null;
+  employerDocsSubmittedAt: string | null;
+  helperDocsSubmittedAt: string | null;
   createdAt: string;
   updatedAt: string;
   selectedServices: SelectedService[];
@@ -46,7 +50,7 @@ export async function listPlacements(): Promise<PlacementView[]> {
   return data;
 }
 
-export type PlacementDocType = 'NRIC_FRONT' | 'NRIC_BACK' | 'NOA';
+export type PlacementDocType = 'NRIC_FRONT' | 'NRIC_BACK' | 'NOA' | 'PASSPORT';
 
 export interface PlacementDocumentView {
   id: string;
@@ -55,7 +59,8 @@ export interface PlacementDocumentView {
   mimeType: string;
   sizeBytes: number;
   uploadedAt: string;
-  viewUrl: string;
+  uploadedByRole: 'EMPLOYER' | 'HELPER';
+  viewUrl: string | null;
 }
 
 export async function fetchPlacementDocuments(placementId: string): Promise<PlacementDocumentView[]> {
@@ -63,8 +68,22 @@ export async function fetchPlacementDocuments(placementId: string): Promise<Plac
   return data;
 }
 
-export async function submitPlacementDocuments(placementId: string): Promise<void> {
-  await api.post(`/placements/${placementId}/documents/submit`);
+export async function submitPlacementDocuments(
+  placementId: string,
+): Promise<{ status: string; employerDocsSubmittedAt: string }> {
+  const { data } = await api.post<{ status: string; employerDocsSubmittedAt: string }>(
+    `/placements/${placementId}/documents/submit`,
+  );
+  return data;
+}
+
+export async function submitHelperDocuments(
+  placementId: string,
+): Promise<{ status: string; helperDocsSubmittedAt: string }> {
+  const { data } = await api.post<{ status: string; helperDocsSubmittedAt: string }>(
+    `/placements/${placementId}/documents/helper-submit`,
+  );
+  return data;
 }
 
 export async function uploadPlacementDocument(

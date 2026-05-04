@@ -10,5 +10,6 @@ public record PlacementDocumentView(
         String mimeType,
         long sizeBytes,
         Instant uploadedAt,
-        String viewUrl
+        String uploadedByRole,  // EMPLOYER | HELPER
+        String viewUrl          // null when caller is not the uploader (metadata-only)
 ) {}

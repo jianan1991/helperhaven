@@ -111,6 +111,13 @@
             <version>${springdoc.version}</version>
         </dependency>
 
+        <!-- Apache POI (Excel upload for public holidays) -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.3.0</version>
+        </dependency>
+
         <!-- Mapping + utils -->
         <dependency>
             <groupId>org.mapstruct</groupId>

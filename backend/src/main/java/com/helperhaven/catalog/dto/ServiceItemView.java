@@ -11,10 +11,11 @@ public record ServiceItemView(
         String description,
         int priceSgd,
         int sortOrder,
-        boolean active
+        boolean active,
+        String workflowStage
 ) {
     public static ServiceItemView from(ServiceItem s) {
         return new ServiceItemView(s.getId(), s.getIcon(), s.getTitle(), s.getDescription(),
-                s.getPriceSgd(), s.getSortOrder(), s.isActive());
+                s.getPriceSgd(), s.getSortOrder(), s.isActive(), s.getWorkflowStage());
     }
 }
