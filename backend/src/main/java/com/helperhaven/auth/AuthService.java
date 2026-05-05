@@ -4,10 +4,13 @@ import com.helperhaven.auth.dto.AuthResponse;
 import com.helperhaven.auth.dto.LoginRequest;
 import com.helperhaven.auth.dto.MeResponse;
 import com.helperhaven.auth.dto.SignupRequest;
+import com.helperhaven.domain.CreditTransaction;
 import com.helperhaven.domain.CreditWallet;
 import com.helperhaven.domain.User;
+import com.helperhaven.domain.enums.CreditReason;
 import com.helperhaven.domain.enums.UserRole;
 import com.helperhaven.domain.enums.UserStatus;
+import com.helperhaven.repo.CreditTransactionRepository;
 import com.helperhaven.repo.CreditWalletRepository;
 import com.helperhaven.repo.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -43,17 +46,20 @@ public class AuthService {
 
     private final UserRepository users;
     private final CreditWalletRepository wallets;
+    private final CreditTransactionRepository ledger;
     private final PasswordEncoder encoder;
     private final JwtService jwt;
 
     public AuthService(
             UserRepository users,
             CreditWalletRepository wallets,
+            CreditTransactionRepository ledger,
             PasswordEncoder encoder,
             JwtService jwt
     ) {
         this.users = users;
         this.wallets = wallets;
+        this.ledger = ledger;
         this.encoder = encoder;
         this.jwt = jwt;
     }
@@ -91,6 +97,16 @@ public class AuthService {
                     .balance(EMPLOYER_SIGNUP_CREDIT_GRANT)
                     .reserved(0)
                     .updatedAt(now)
+                    .build());
+            ledger.save(CreditTransaction.builder()
+                    .id(UUID.randomUUID())
+                    .walletUserId(saved.getId())
+                    .delta(EMPLOYER_SIGNUP_CREDIT_GRANT)
+                    .reason(CreditReason.SIGNUP_GRANT)
+                    .referenceType("signup")
+                    .referenceId(saved.getId())
+                    .balanceAfter(EMPLOYER_SIGNUP_CREDIT_GRANT)
+                    .createdAt(now)
                     .build());
         }
 

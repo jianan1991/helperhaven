@@ -175,6 +175,7 @@ public class PlacementDocumentController {
         // Transition to DOCS_COLLECTION only once both parties have submitted
         if (p.getHelperDocsSubmittedAt() != null) {
             p.setStatus("DOCS_COLLECTION");
+            p.setDocsAt(now);
             notifService.notifyAdminsDocsReady(p.getId());
         }
         p.setUpdatedAt(now);
@@ -217,6 +218,7 @@ public class PlacementDocumentController {
         // Transition to DOCS_COLLECTION only once both parties have submitted (JWC only)
         if ("JWC".equals(p.getEngagementMode()) && p.getEmployerDocsSubmittedAt() != null) {
             p.setStatus("DOCS_COLLECTION");
+            p.setDocsAt(now);
             notifService.notifyAdminsDocsReady(p.getId());
         }
         p.setUpdatedAt(now);

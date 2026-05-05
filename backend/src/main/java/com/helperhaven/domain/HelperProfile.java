@@ -46,6 +46,10 @@ public class HelperProfile {
     @Column(name = "years_experience", nullable = false)
     private Short yearsExperience;
 
+    @Builder.Default
+    @Column(name = "is_fresh", nullable = false)
+    private Boolean isFresh = false;
+
     private String religion;
 
     @Column(name = "marital_status")

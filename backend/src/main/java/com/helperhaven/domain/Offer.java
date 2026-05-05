@@ -1,7 +1,10 @@
 package com.helperhaven.domain;
 
+import com.helperhaven.domain.enums.OfferStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -37,9 +40,9 @@ public class Offer {
     @Column(name = "off_day_policy", length = 500)
     private String offDayPolicy;
 
-    /** PENDING | ACCEPTED | REJECTED | COUNTERED */
-    @Column(nullable = false)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "offer_status")
+    private OfferStatus status;
 
     @Column(name = "parent_offer_id")
     private UUID parentOfferId;

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '../lib/auth';
+import { fmtDate } from '../lib/dates';
 import { listPlacements, type PlacementView } from '../lib/placements';
 import {
   fetchEmployment, fetchLeaveRequests, fetchTodos, fetchHolidays,
@@ -13,9 +14,6 @@ import {
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-function fmtDate(iso: string) {
-  return new Date(iso + 'T00:00:00').toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' });
-}
 function isoDate(d: Date) {
   return d.toISOString().slice(0, 10);
 }

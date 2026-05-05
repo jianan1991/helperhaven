@@ -1,0 +1,2 @@
+ALTER TABLE helper_profiles
+    ADD COLUMN is_fresh BOOLEAN NOT NULL DEFAULT FALSE;

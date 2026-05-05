@@ -89,6 +89,10 @@ public class EmploymentController {
         if (p == null) return null;
         if (!callerId.equals(p.getEmployerId())) { res.sendError(403, "Only employer may set end date"); return null; }
         if (!"ACTIVE".equals(p.getStatus())) { res.sendError(400, "Employment is not active"); return null; }
+        if (p.getEmploymentStartDate() != null && req.endDate() != null
+                && req.endDate().isBefore(p.getEmploymentStartDate())) {
+            res.sendError(400, "End date cannot be before start date"); return null;
+        }
         p.setEmploymentEndDate(req.endDate());
         p.setUpdatedAt(Instant.now());
         placements.save(p);
@@ -135,6 +139,18 @@ public class EmploymentController {
         Placement p = requireParty(callerId, placementId, res);
         if (p == null) return null;
         if (!"ACTIVE".equals(p.getStatus())) { res.sendError(400, "Employment is not active"); return null; }
+        if (req.startDate() == null || req.endDate() == null) { res.sendError(400, "Start and end date are required"); return null; }
+        if (req.endDate().isBefore(req.startDate())) { res.sendError(400, "End date cannot be before start date"); return null; }
+        if (req.startDate().isBefore(LocalDate.now())) { res.sendError(400, "Leave cannot start in the past"); return null; }
+        if (p.getEmploymentStartDate() != null && req.startDate().isBefore(p.getEmploymentStartDate())) {
+            res.sendError(400, "Leave cannot start before the employment start date"); return null;
+        }
+        if (p.getEmploymentEndDate() != null && req.endDate().isAfter(p.getEmploymentEndDate())) {
+            res.sendError(400, "Leave cannot extend beyond the employment end date"); return null;
+        }
+        if (!leaveRequests.findApprovedOverlapping(placementId, req.startDate(), req.endDate()).isEmpty()) {
+            res.sendError(409, "Dates overlap with already-approved leave"); return null;
+        }
 
         String type = req.type().toUpperCase();
         boolean isHelper = callerId.equals(p.getHelperId());

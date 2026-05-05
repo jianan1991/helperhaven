@@ -57,6 +57,7 @@ export interface HelperProfile {
   nationality: Nationality;
   dateOfBirth: string; // ISO date
   yearsExperience: number;
+  isFresh: boolean;
   religion: string | null;
   maritalStatus: string | null;
   education: string | null;

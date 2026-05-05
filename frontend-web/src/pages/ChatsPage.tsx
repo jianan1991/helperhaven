@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { asMessage } from '../lib/api';
 import { useAuthStore } from '../lib/auth';
+import { fmtTime, relTime } from '../lib/dates';
 import {
   listConversations,
   listMessages,
@@ -41,6 +42,8 @@ export default function ChatsPage() {
 
   // Conversation list
   const [convs, setConvs] = useState<ConversationView[] | null>(null);
+  const [convsError, setConvsError] = useState(false);
+  const [convsRetryKey, setConvsRetryKey] = useState(0);
   const [balance, setBalance] = useState<number | null>(null);
 
   // Active thread
@@ -70,11 +73,12 @@ export default function ChatsPage() {
   // Load conversation list
   useEffect(() => {
     let cancelled = false;
+    setConvsError(false);
     listConversations()
       .then((list) => { if (!cancelled) setConvs(list); })
-      .catch(() => { if (!cancelled) setConvs([]); });
+      .catch(() => { if (!cancelled) { setConvsError(true); setConvs([]); } });
     return () => { cancelled = true; };
-  }, []);
+  }, [convsRetryKey]);
 
   // Wallet balance (employers only)
   useEffect(() => {
@@ -326,6 +330,17 @@ export default function ChatsPage() {
           style={{ maxHeight: 620, overflowY: 'auto' }}>
           {convs === null ? (
             <div className="px-3 py-10 text-center text-ink-500 text-sm">Loading…</div>
+          ) : convsError ? (
+            <div className="px-3 py-10 text-center space-y-3">
+              <p className="text-sm text-ink-700">Could not load conversations.</p>
+              <button
+                type="button"
+                onClick={() => setConvsRetryKey((k) => k + 1)}
+                className="text-xs text-sage-700 hover:text-sage-900 font-medium underline"
+              >
+                Try again
+              </button>
+            </div>
           ) : convs.length === 0 ? (
             <div className="px-3 py-10 text-center">
               <p className="text-sm text-ink-700 mb-3">No conversations yet.</p>
@@ -513,6 +528,7 @@ export default function ChatsPage() {
                       <OfferCard
                         key={m.id}
                         offer={offer}
+                        parentOffer={offer.parentOfferId ? offers[offer.parentOfferId] : undefined}
                         myId={me!.id}
                         myRole={me!.role}
                         isCountering={counteringId === offerId}
@@ -660,6 +676,7 @@ function useOfferCountdown(expiresAt: string): string {
 
 function OfferCard({
   offer,
+  parentOffer,
   myId,
   myRole,
   isCountering,
@@ -676,6 +693,7 @@ function OfferCard({
   onInitiatePlacement,
 }: {
   offer: OfferView;
+  parentOffer?: OfferView;
   myId: string;
   myRole: string;
   isCountering: boolean;
@@ -716,7 +734,14 @@ function OfferCard({
       <div className="w-full max-w-sm rounded-2xl border border-cream-200 bg-white shadow-soft overflow-hidden">
         {/* Header */}
         <div className="px-4 pt-4 pb-3 border-b border-cream-200 flex items-center justify-between">
-          <span className="serif text-sm font-bold text-ink-900">📋 Job Offer</span>
+          <div>
+            <span className="serif text-sm font-bold text-ink-900">📋 Job Offer</span>
+            {parentOffer && (
+              <div className="text-[10px] text-ink-400 mt-0.5">
+                Counter to SGD {parentOffer.salarySgd}/month
+              </div>
+            )}
+          </div>
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusBadge[offer.status] ?? statusBadge.PENDING}`}>
             {statusLabel[offer.status] ?? offer.status}
           </span>
@@ -808,7 +833,9 @@ function OfferCard({
             </button>
             <button
               type="button"
-              onClick={onReject}
+              onClick={() => {
+                if (window.confirm('Decline this offer? This cannot be undone.')) onReject();
+              }}
               disabled={inFlight}
               className="flex-1 py-2 rounded-full bg-cream-50 border border-cream-200 text-xs text-clay-600 hover:border-clay-400 disabled:opacity-60 transition-colors"
             >
@@ -857,7 +884,7 @@ function Bubble({ msg, mine }: { msg: MessageView; mine: boolean }) {
           {msg.body}
         </div>
         <div className={`text-[10px] text-ink-500 ${mine && !isAdmin ? 'text-right' : ''}`}>
-          {mine && !isAdmin ? 'You · ' : ''}{formatTime(msg.sentAt)}
+          {mine && !isAdmin ? 'You · ' : ''}{fmtTime(msg.sentAt)}
         </div>
       </div>
     </div>
@@ -897,19 +924,4 @@ function mergeMessages(prev: MessageView[], incoming: MessageView[]): MessageVie
   const seen = new Set(prev.map((m) => m.id));
   const additions = incoming.filter((m) => !seen.has(m.id));
   return additions.length ? [...prev, ...additions] : prev;
-}
-
-function relTime(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const min = 60_000, hr = 60 * min, day = 24 * hr;
-  if (diff < min) return 'just now';
-  if (diff < hr) return `${Math.floor(diff / min)}m ago`;
-  if (diff < day) return `${Math.floor(diff / hr)}h ago`;
-  return `${Math.floor(diff / day)}d ago`;
-}
-
-function formatTime(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }

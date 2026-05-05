@@ -21,6 +21,7 @@ public record HelperProfileRequest(
         @NotNull Nationality nationality,
         @NotNull @Past LocalDate dateOfBirth,
         @NotNull @PositiveOrZero Integer yearsExperience,
+        @NotNull Boolean isFresh,
         String religion,
         String maritalStatus,
         String education,

@@ -97,6 +97,7 @@ interface FormState {
   fullName: string;
   nationality: Nationality | '';
   dateOfBirth: string;
+  isFresh: boolean;
   yearsExperience: string;
   bio: string;
   workHistory: WorkEntry[];
@@ -117,6 +118,7 @@ const EMPTY: FormState = {
   fullName: '',
   nationality: '',
   dateOfBirth: '',
+  isFresh: false,
   yearsExperience: '',
   bio: '',
   workHistory: [],
@@ -136,9 +138,11 @@ function validate(form: FormState): string | null {
   if (!form.displayFirstName.trim()) return 'Tell us what to call you on your card.';
   if (!form.nationality) return 'Pick your nationality.';
   if (!form.dateOfBirth) return 'Add your date of birth.';
-  if (!form.yearsExperience || isNaN(Number(form.yearsExperience)))
-    return 'Years of experience must be a number (use 0 if this is your first time).';
-  if (Number(form.yearsExperience) < 0) return "Experience can't be negative.";
+  if (!form.isFresh) {
+    if (!form.yearsExperience || isNaN(Number(form.yearsExperience)))
+      return 'Enter how many years of experience you have.';
+    if (Number(form.yearsExperience) < 1) return 'Experienced helpers must have at least 1 year. Select "Fresh helper" if this is your first time.';
+  }
   if (form.languages.length === 0)
     return 'Choose at least one language so families can communicate with you.';
   if (vectorSum(form.skills) !== 100)
@@ -241,7 +245,8 @@ export default function HelperOnboarding() {
         fullName: form.fullName.trim() || null,
         nationality: form.nationality as Nationality,
         dateOfBirth: form.dateOfBirth,
-        yearsExperience: Number(form.yearsExperience),
+        isFresh: form.isFresh,
+        yearsExperience: form.isFresh ? 0 : Number(form.yearsExperience),
         religion: null,
         maritalStatus: null,
         education: null,
@@ -502,16 +507,40 @@ export default function HelperOnboarding() {
             className={inputCls()}
           />
         </WizardField>
-        <WizardField label="Years of experience" hint="0 if this is your first time">
-          <input
-            type="number"
-            inputMode="numeric"
-            min={0}
-            value={form.yearsExperience}
-            onChange={(e) => update('yearsExperience', e.target.value)}
-            placeholder="0"
-            className={inputCls()}
-          />
+        <WizardField label="Experience level">
+          <div className="flex gap-2">
+            {(['fresh', 'experienced'] as const).map((level) => {
+              const active = level === 'fresh' ? form.isFresh : !form.isFresh;
+              return (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => {
+                    update('isFresh', level === 'fresh');
+                    if (level === 'fresh') update('yearsExperience', '');
+                  }}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                    active
+                      ? 'bg-sage-600 text-white border-sage-600'
+                      : 'bg-white text-sage-700 border-sage-300 hover:bg-sage-50'
+                  }`}
+                >
+                  {level === 'fresh' ? 'Fresh helper' : 'Experienced'}
+                </button>
+              );
+            })}
+          </div>
+          {!form.isFresh && (
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              value={form.yearsExperience}
+              onChange={(e) => update('yearsExperience', e.target.value)}
+              placeholder="Years of experience"
+              className={`${inputCls()} mt-2`}
+            />
+          )}
         </WizardField>
       </Section>
 
@@ -954,6 +983,7 @@ function toFormState(p: HelperProfile): FormState {
     fullName: p.fullName ?? '',
     nationality: p.nationality,
     dateOfBirth: p.dateOfBirth ?? '',
+    isFresh: p.isFresh ?? false,
     yearsExperience: String(p.yearsExperience ?? 0),
     bio: p.bio ?? '',
     workHistory: p.workHistory ?? [],

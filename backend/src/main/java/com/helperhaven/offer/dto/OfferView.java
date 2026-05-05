@@ -23,7 +23,7 @@ public record OfferView(
                 o.getCreatedByUserId(),
                 o.getSalarySgd(),
                 o.getOffDayPolicy(),
-                o.getStatus(),
+                o.getStatus().name(),
                 o.getParentOfferId(),
                 o.getCreatedAt(),
                 o.getExpiresAt()

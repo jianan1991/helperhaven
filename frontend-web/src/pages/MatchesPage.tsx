@@ -25,12 +25,14 @@ export default function MatchesPage() {
   const [matches, setMatches] = useState<MatchView[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [profileNotReady, setProfileNotReady] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setError(null);
       setProfileNotReady(false);
+      setMatches(null);
       try {
         const list = await fetchMatches();
         if (!cancelled) setMatches(list);
@@ -48,7 +50,7 @@ export default function MatchesPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [retryKey]);
 
   if (matches === null) return <Centered>Loading matches…</Centered>;
 
@@ -66,7 +68,17 @@ export default function MatchesPage() {
     );
   }
 
-  if (error) return <Centered>{error}</Centered>;
+  if (error) return (
+    <Centered>
+      <p className="text-ink-700 mb-4">{error}</p>
+      <button
+        onClick={() => setRetryKey((k) => k + 1)}
+        className="px-5 py-2 rounded-full border border-sage-400 text-sage-700 text-sm hover:bg-sage-50 transition-colors"
+      >
+        Try again
+      </button>
+    </Centered>
+  );
 
   return (
     <div className="max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">

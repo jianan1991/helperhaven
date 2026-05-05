@@ -2,6 +2,7 @@ package com.helperhaven.placement;
 
 import com.helperhaven.domain.Conversation;
 import com.helperhaven.domain.Offer;
+import com.helperhaven.domain.enums.OfferStatus;
 import com.helperhaven.domain.Placement;
 import com.helperhaven.domain.PlacementServiceItem;
 import com.helperhaven.domain.PlacementServiceItemKey;
@@ -89,7 +90,7 @@ public class PlacementService {
 
         Offer offer = offers.findById(offerId)
                 .orElseThrow(() -> new PlacementException(PlacementError.NOT_FOUND, "Offer not found"));
-        if (!"ACCEPTED".equals(offer.getStatus())) {
+        if (offer.getStatus() != OfferStatus.ACCEPTED) {
             throw new PlacementException(PlacementError.INVALID_STATE, "Offer must be accepted first");
         }
 
@@ -139,6 +140,7 @@ public class PlacementService {
                 .helperId(helperId)
                 .engagementMode(engagementMode)
                 .status("INITIATED")
+                .initiatedAt(now)
                 .createdAt(now)
                 .updatedAt(now)
                 .build();

@@ -27,6 +27,7 @@ import java.time.Period;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -96,8 +97,19 @@ public class MatchService {
                 .collect(Collectors.toMap(HelperInterest::getHelperId,
                         i -> i.getExpressedAt().plus(INTEREST_TTL)));
 
-        return helpers.findAllScored().stream()
-                .filter(h -> isActive(h.getUserId()))
+        List<HelperProfile> allHelpers = helpers.findAllScored();
+        if (allHelpers.isEmpty()) return List.of();
+
+        // Batch-load user statuses in one query instead of one per helper
+        Set<UUID> activeHelperIds = users
+                .findAllByIdIn(allHelpers.stream().map(HelperProfile::getUserId).toList())
+                .stream()
+                .filter(u -> u.getStatus() == UserStatus.ACTIVE)
+                .map(User::getId)
+                .collect(Collectors.toSet());
+
+        return allHelpers.stream()
+                .filter(h -> activeHelperIds.contains(h.getUserId()))
                 .map(h -> toEmployerView(h, w, employerId, interestedHelpers.get(h.getUserId())))
                 .sorted(Comparator.comparingDouble(MatchView::score).reversed())
                 .limit(MATCH_LIMIT)
@@ -124,9 +136,13 @@ public class MatchService {
                 .collect(Collectors.toMap(HelperInterest::getEmployerId,
                         i -> i.getExpressedAt().plus(INTEREST_TTL)));
 
-        return employers.findAll().stream()
+        // Load only active employers in 2 queries instead of findAll + N×findById
+        Set<UUID> activeEmployerIds = users
+                .findAllByRoleAndStatus(UserRole.EMPLOYER, UserStatus.ACTIVE)
+                .stream().map(User::getId).collect(Collectors.toSet());
+
+        return employers.findAllById(activeEmployerIds).stream()
                 .filter(MatchService::hasFullWeights)
-                .filter(e -> isActive(e.getUserId()))
                 .map(e -> toHelperView(e, s, expressedTo.get(e.getUserId())))
                 .sorted(Comparator.comparingDouble(MatchView::score).reversed())
                 .limit(MATCH_LIMIT)

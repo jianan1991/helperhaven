@@ -17,6 +17,7 @@ public record HelperProfileResponse(
         Nationality nationality,
         LocalDate dateOfBirth,
         Integer yearsExperience,
+        Boolean isFresh,
         String religion,
         String maritalStatus,
         String education,
@@ -51,7 +52,7 @@ public record HelperProfileResponse(
     public HelperProfileResponse withPhotoUrl(String newPhotoUrl) {
         return new HelperProfileResponse(
                 userId, displayFirstName, fullName, nationality, dateOfBirth,
-                yearsExperience, religion, maritalStatus, education, bio,
+                yearsExperience, isFresh, religion, maritalStatus, education, bio,
                 heightCm, weightKg, willingLiveIn,
                 comfortableWithChildren, comfortableWithPets, halal, allergies,
                 expectedSalarySgd, availableFrom, currentLocation, offDayPolicy, newPhotoUrl,
@@ -68,6 +69,7 @@ public record HelperProfileResponse(
                 p.getNationality(),
                 p.getDateOfBirth(),
                 p.getYearsExperience() == null ? null : p.getYearsExperience().intValue(),
+                Boolean.TRUE.equals(p.getIsFresh()),
                 p.getReligion(),
                 p.getMaritalStatus(),
                 p.getEducation(),

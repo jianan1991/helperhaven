@@ -104,6 +104,7 @@ public class ProfileService {
         p.setNationality(req.nationality());
         p.setDateOfBirth(req.dateOfBirth());
         p.setYearsExperience((short) req.yearsExperience().intValue());
+        p.setIsFresh(Boolean.TRUE.equals(req.isFresh()));
         p.setReligion(req.religion());
         p.setMaritalStatus(req.maritalStatus());
         p.setEducation(req.education());

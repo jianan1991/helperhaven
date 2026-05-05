@@ -24,5 +24,6 @@ public enum CreditReason {
     UNLOCK_REFUND_AUTO,
     UNLOCK_REFUND_MANUAL,
     ADMIN_ADJUST,
-    REFUND
+    REFUND,
+    SIGNUP_GRANT
 }

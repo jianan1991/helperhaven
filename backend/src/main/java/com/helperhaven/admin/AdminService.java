@@ -258,9 +258,30 @@ public class AdminService {
         }
         Placement p = placements.findById(placementId)
                 .orElseThrow(() -> new NoSuchElementException("Placement not found: " + placementId));
+
+        // Enforce sequential transitions — skipping steps is not allowed
+        int currentIdx = PLACEMENT_STATUS_ORDER.indexOf(p.getStatus());
+        int newIdx = PLACEMENT_STATUS_ORDER.indexOf(newStatus);
+        if (newIdx != currentIdx + 1) {
+            throw new IllegalArgumentException(
+                    "Invalid transition from " + p.getStatus() + " to " + newStatus
+                    + ". Steps must advance one at a time.");
+        }
+
+        Instant now = Instant.now();
         p.setStatus(newStatus);
-        p.setUpdatedAt(Instant.now());
-        boolean becomingActive = "ACTIVE".equals(newStatus) && !"ACTIVE".equals(p.getStatus());
+        p.setUpdatedAt(now);
+
+        // Record per-stage timestamp
+        switch (newStatus) {
+            case "DOCS_COLLECTION" -> p.setDocsAt(now);
+            case "MOM_SUBMITTED"   -> p.setMomSubmittedAt(now);
+            case "IPA_ISSUED"      -> p.setIpaIssuedAt(now);
+            case "HELPER_ARRIVAL"  -> p.setArrivalAt(now);
+            case "ACTIVE"          -> p.setActivatedAt(now);
+        }
+
+        boolean becomingActive = "ACTIVE".equals(newStatus);
         if (becomingActive && p.getEmploymentStartDate() == null) {
             p.setEmploymentStartDate(LocalDate.now());
             if (p.getEmploymentEndDate() == null) {

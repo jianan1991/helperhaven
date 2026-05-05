@@ -64,4 +64,22 @@ public class Placement {
     /** 0=Mon … 6=Sun; null until employer configures it */
     @Column(name = "rest_day_of_week")
     private Integer restDayOfWeek;
+
+    @Column(name = "initiated_at")
+    private Instant initiatedAt;
+
+    @Column(name = "docs_at")
+    private Instant docsAt;
+
+    @Column(name = "mom_submitted_at")
+    private Instant momSubmittedAt;
+
+    @Column(name = "ipa_issued_at")
+    private Instant ipaIssuedAt;
+
+    @Column(name = "arrival_at")
+    private Instant arrivalAt;
+
+    @Column(name = "activated_at")
+    private Instant activatedAt;
 }
