@@ -219,6 +219,7 @@ public class ChatService {
                 cp.displayName(),
                 cp.photoUrl(),
                 cp.contact(),
+                cp.offDayPolicy(),
                 c.getLastMessageAt(),
                 preview,
                 unread,
@@ -286,7 +287,7 @@ public class ChatService {
      */
     private Counterparty lookupCounterparty(UUID userId, boolean revealContact) {
         User u = users.findById(userId).orElse(null);
-        if (u == null) return new Counterparty("Unknown", null, null);
+        if (u == null) return new Counterparty("Unknown", null, null, null);
 
         switch (u.getRole()) {
             case HELPER -> {
@@ -296,7 +297,8 @@ public class ChatService {
                     return new Counterparty(
                             h.getDisplayFirstName() == null ? "Helper" : h.getDisplayFirstName(),
                             signedPhoto(h.getPhotoUrl()),
-                            contact
+                            contact,
+                            h.getOffDayPolicy()
                     );
                 }
             }
@@ -307,14 +309,14 @@ public class ChatService {
                     if (name == null || name.isBlank()) {
                         name = "Family in " + (e.getDistrict() == null ? "SG" : e.getDistrict());
                     }
-                    return new Counterparty(name, null, null);
+                    return new Counterparty(name, null, null, null);
                 }
             }
             default -> {
                 // ADMIN / AGENCY shouldn't appear in chat in Sprint A, but fall through cleanly.
             }
         }
-        return new Counterparty(u.getEmail() == null ? "Unknown" : u.getEmail(), null, null);
+        return new Counterparty(u.getEmail() == null ? "Unknown" : u.getEmail(), null, null, null);
     }
 
     private String signedPhoto(String keyOrUrl) {
@@ -323,7 +325,7 @@ public class ChatService {
         return storage.signedGetUrl(keyOrUrl, PHOTO_GET_TTL);
     }
 
-    private record Counterparty(String displayName, String photoUrl, String contact) {}
+    private record Counterparty(String displayName, String photoUrl, String contact, String offDayPolicy) {}
 
     // ---------------------------------------------------------------- errors
 

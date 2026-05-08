@@ -7,5 +7,6 @@ import java.util.UUID;
 
 public record CreatePlacementRequest(
         @NotBlank String mode,
-        List<UUID> selectedServiceIds
+        List<UUID> selectedServiceIds,
+        java.time.LocalDate idealStartDate
 ) {}

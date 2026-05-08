@@ -15,6 +15,8 @@ public record ConversationView(
         String counterpartyPhotoUrl,
         /** Non-null only when the viewer is an employer — revealed as soon as they open the chat. */
         String counterpartyContact,
+        /** Helper's preferred off-day policy from their profile; non-null only when counterparty is a helper. */
+        String counterpartyOffDayPolicy,
         Instant lastMessageAt,
         String lastMessagePreview,
         int unreadCount,

@@ -8,6 +8,8 @@ import {
   uploadPlacementDocument,
   submitPlacementDocuments,
   submitHelperDocuments,
+  setIdealStartDate,
+  setMemberDocCount,
   PLACEMENT_STEPS,
   type PlacementView,
   type PlacementDocumentView,
@@ -338,12 +340,13 @@ function EngagementGateway({
 // ── Stage descriptions shown to family & helper ───────────────────────────────
 
 const STAGE_DESC: Record<string, string> = {
-  INITIATED:       'Hiring created — awaiting document uploads from both parties.',
-  DOCS_COLLECTION: 'Documents received — our team is reviewing and preparing the MOM application.',
-  MOM_SUBMITTED:   'MOM work permit application submitted — awaiting In-Principle Approval (IPA).',
-  IPA_ISSUED:      'IPA received — employer to purchase bond & insurance and arrange helper\'s arrival.',
-  HELPER_ARRIVAL:  'Helper has arrived — completing Settling-In Programme, medical exam, and biometrics.',
-  ACTIVE:          'Hiring fully active. Welcome to the family!',
+  INITIATED:        'Hiring created — awaiting document uploads from both parties.',
+  DOCS_COLLECTION:  'Documents received — our team is reviewing and preparing the MOM application.',
+  MOM_ACKNOWLEDGE:  'Action required — please check your email for a message from MOM and complete the acknowledgement.',
+  MOM_SUBMITTED:    'MOM work permit application submitted — awaiting In-Principle Approval (IPA).',
+  IPA_ISSUED:       'IPA received — employer to purchase bond & insurance and arrange helper\'s arrival.',
+  HELPER_ARRIVAL:   'Helper has arrived — completing Settling-In Programme, medical exam, and biometrics.',
+  ACTIVE:           'Hiring fully active. Welcome to the family!',
 };
 
 // ── Active hiring — minimized pill ───────────────────────────────────────────
@@ -408,12 +411,36 @@ function PlacementCard({
   isEmployer: boolean;
   onStatusChange: (id: string, status: PlacementView['status']) => void;
 }) {
-  const stepIndex = PLACEMENT_STEPS.findIndex((s) => s.key === p.status);
+  const hasMomService = p.selectedServices.some((s) => s.workflowStage === 'MOM_SUBMITTED');
+  const visibleSteps = PLACEMENT_STEPS.filter(
+    (step) => (step.key !== 'MOM_ACKNOWLEDGE' && step.key !== 'MOM_SUBMITTED') || hasMomService,
+  );
+  const stepIndex = visibleSteps.findIndex((s) => s.key === p.status);
   const mode = p.engagementMode;
 
   const [docs, setDocs] = useState<PlacementDocumentView[] | null>(null);
   const [employerDocsSubmittedAt, setEmployerDocsSubmittedAt] = useState<string | null>(p.employerDocsSubmittedAt);
   const [helperDocsSubmittedAt, setHelperDocsSubmittedAt] = useState<string | null>(p.helperDocsSubmittedAt);
+  const [idealStartDateInput, setIdealStartDateInput] = useState(p.idealStartDate ?? '');
+  const [savingStartDate, setSavingStartDate] = useState(false);
+  const [idealStartDateSaved, setIdealStartDateSaved] = useState<string | null>(p.idealStartDate);
+
+  const minStartDate = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 21);
+    return d.toISOString().slice(0, 10);
+  })();
+
+  async function handleSaveIdealStartDate() {
+    if (!idealStartDateInput || savingStartDate) return;
+    setSavingStartDate(true);
+    try {
+      await setIdealStartDate(p.id, idealStartDateInput);
+      setIdealStartDateSaved(idealStartDateInput);
+    } finally {
+      setSavingStartDate(false);
+    }
+  }
 
   useEffect(() => {
     fetchPlacementDocuments(p.id).then(setDocs).catch(() => setDocs([]));
@@ -458,7 +485,7 @@ function PlacementCard({
 
       {/* Progress stepper with services shown under their stage */}
       <div className="flex items-start">
-        {PLACEMENT_STEPS.map((step, i) => {
+        {visibleSteps.map((step, i) => {
           const done   = i <= stepIndex;
           const active = i === stepIndex;
           const stageSvcs = mode === 'JWC'
@@ -495,7 +522,7 @@ function PlacementCard({
                   </div>
                 )}
               </div>
-              {i < PLACEMENT_STEPS.length - 1 && (
+              {i < visibleSteps.length - 1 && (
                 <div className={`flex-1 h-0.5 mx-1 mt-3.5 rounded shrink-0 ${i < stepIndex ? 'bg-sage-400' : 'bg-cream-200'}`} />
               )}
             </div>
@@ -507,7 +534,80 @@ function PlacementCard({
       {STAGE_DESC[p.status] && (
         <div className="rounded-xl bg-cream-50 border border-cream-200 px-3.5 py-2.5 flex items-start gap-2">
           <span className="text-[10px] font-semibold uppercase tracking-widest text-ink-400 shrink-0 mt-0.5">Now</span>
-          <p className="text-xs text-ink-700 leading-relaxed">{STAGE_DESC[p.status]}</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-ink-700 leading-relaxed">{STAGE_DESC[p.status]}</p>
+            {p.idealStartDate && (
+              <p className="text-[11px] text-ink-500 mt-1">
+                Ideal start date:{' '}
+                <span className="font-medium text-ink-700">
+                  {new Date(p.idealStartDate).toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </span>
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* MOM Acknowledge action banner — shown to employer on JWC placements only */}
+      {p.status === 'MOM_ACKNOWLEDGE' && isEmployer && mode === 'JWC' && (
+        <div className="rounded-2xl border-2 border-butter-300 bg-butter-50 px-5 py-4 space-y-2">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl shrink-0">📧</span>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-ink-900">Action required — check your email from MOM</p>
+              <p className="text-xs text-ink-700 mt-1 leading-relaxed">
+                The Ministry of Manpower (MOM) has sent you an email asking you to acknowledge that{' '}
+                <span className="font-semibold">JWC Employment Service</span> will represent you for the
+                Work Permit application. Please complete the acknowledgement as soon as possible to avoid
+                delays.
+              </p>
+            </div>
+          </div>
+          <div className="rounded-xl bg-white border border-butter-200 px-4 py-3 space-y-1.5">
+            <p className="text-xs font-semibold text-ink-800">Steps to complete:</p>
+            <ol className="space-y-1 text-xs text-ink-700 list-decimal list-inside">
+              <li>Open the email from <span className="font-medium">mom.gov.sg</span> in your inbox (check spam if not found)</li>
+              <li>Click the acknowledgement link in the email</li>
+              <li>Log in with your Singpass and confirm JWC as your appointed EA</li>
+            </ol>
+          </div>
+          <p className="text-[11px] text-ink-500">
+            Our team will be notified once MOM confirms the acknowledgement and will advance your application automatically.
+          </p>
+        </div>
+      )}
+
+      {/* Ideal start date — employer sets this at INITIATED for JWC */}
+      {isEmployer && mode === 'JWC' && p.status === 'INITIATED' && (
+        <div className="rounded-2xl border border-cream-200 bg-white px-4 py-3 space-y-2">
+          <div>
+            <p className="text-sm font-medium text-ink-900">Ideal employment start date</p>
+            <p className="text-xs text-ink-500 mt-0.5">
+              When would you like the helper to start? Earliest is 3 weeks from today.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              min={minStartDate}
+              value={idealStartDateInput}
+              onChange={(e) => setIdealStartDateInput(e.target.value)}
+              className="flex-1 border border-cream-300 rounded-xl px-3 py-2 text-sm text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-400 bg-white"
+            />
+            <button
+              onClick={() => void handleSaveIdealStartDate()}
+              disabled={!idealStartDateInput || savingStartDate || idealStartDateInput === idealStartDateSaved}
+              className="shrink-0 px-4 py-2 rounded-xl bg-sage-800 text-white text-sm font-medium hover:bg-sage-700 disabled:opacity-40 transition-colors"
+            >
+              {savingStartDate ? 'Saving…' : idealStartDateSaved ? 'Update' : 'Save'}
+            </button>
+          </div>
+          {idealStartDateSaved && (
+            <p className="text-[11px] text-sage-700">
+              Saved:{' '}
+              {new Date(idealStartDateSaved).toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' })}
+            </p>
+          )}
         </div>
       )}
 
@@ -537,9 +637,11 @@ function PlacementCard({
           <JwcDocumentSection
             placementId={p.id}
             status={p.status}
+            memberDocCount={p.memberDocCount}
             docs={employerDocs}
             employerDocsSubmittedAt={employerDocsSubmittedAt}
             onDocUploaded={handleDocUploaded}
+            onMemberCountChange={() => {}}
             onSubmitted={(submittedAt, newStatus) => {
               setEmployerDocsSubmittedAt(submittedAt);
               if (newStatus !== p.status) onStatusChange(p.id, newStatus as PlacementView['status']);
@@ -630,48 +732,135 @@ function PersonAvatar({ src, name, size = 'md' }: { src: string | null; name: st
 // Update this URL to the actual JotForm employer intake form link
 const JOTFORM_URL = 'https://form.jotform.com/helperhaven/employer-intake';
 
-const DOC_SLOTS: { type: PlacementDocType; label: string; hint: string }[] = [
-  { type: 'NRIC_FRONT', label: 'NRIC — Front', hint: 'PDF or image of NRIC front side' },
-  { type: 'NRIC_BACK',  label: 'NRIC — Back',  hint: 'PDF or image of NRIC back side' },
+const BASE_DOC_SLOTS: { type: PlacementDocType; label: string; hint: string }[] = [
+  { type: 'NRIC_FRONT', label: 'Main applicant NRIC — Front', hint: 'PDF or image of NRIC front side' },
+  { type: 'NRIC_BACK',  label: 'Main applicant NRIC — Back',  hint: 'PDF or image of NRIC back side' },
   { type: 'NOA',        label: 'Notice of Assessment (NOA)', hint: 'Latest IRAS NOA — PDF' },
 ];
+
+function DocSlotRow({
+  type, label, hint, existing, busy, onFile,
+}: {
+  type: string;
+  label: string;
+  hint: string;
+  existing: PlacementDocumentView | null;
+  busy: boolean;
+  onFile: (f: File) => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-3">
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium text-ink-900">{label}</div>
+        <div className="text-xs text-ink-400 mt-0.5">
+          {existing ? (
+            existing.viewUrl
+              ? <a href={existing.viewUrl} target="_blank" rel="noopener noreferrer"
+                  className="text-sage-700 hover:text-sage-900 font-medium">
+                  {existing.originalName}
+                </a>
+              : <span className="text-ink-600">{existing.originalName}</span>
+          ) : hint}
+        </div>
+      </div>
+      <div className="shrink-0 flex items-center gap-2">
+        {existing && (
+          <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-sage-100 text-sage-700">
+            Uploaded
+          </span>
+        )}
+        <label className={`cursor-pointer text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
+          busy ? 'opacity-40 pointer-events-none' : ''
+        } ${existing
+          ? 'border-cream-300 text-ink-500 hover:border-sage-400 hover:text-sage-700'
+          : 'bg-sage-700 text-white border-sage-700 hover:bg-sage-800'
+        }`}>
+          {busy ? 'Uploading…' : existing ? 'Replace' : 'Upload'}
+          <input
+            type="file"
+            accept=".pdf,image/*"
+            className="sr-only"
+            disabled={busy}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) onFile(f);
+              e.target.value = '';
+            }}
+          />
+        </label>
+      </div>
+    </div>
+  );
+}
+
+function memberSlot(i: number): { type: string; label: string; hint: string } {
+  return {
+    type: `MEMBER_IC_${i}`,
+    label: `Household Member ${i} — IC / Passport`,
+    hint: 'NRIC (front & back combined) or passport bio-data page',
+  };
+}
 
 function JwcDocumentSection({
   placementId,
   status,
+  memberDocCount: initialMemberDocCount,
   docs,
   employerDocsSubmittedAt,
   onDocUploaded,
   onSubmitted,
+  onMemberCountChange,
 }: {
   placementId: string;
   status: PlacementView['status'];
+  memberDocCount: number;
   docs: PlacementDocumentView[];
   employerDocsSubmittedAt: string | null;
   onDocUploaded: (doc: PlacementDocumentView) => void;
   onSubmitted: (employerDocsSubmittedAt: string, status: string) => void;
+  onMemberCountChange: (newCount: number) => void;
 }) {
-  const [uploading, setUploading] = useState<PlacementDocType | null>(null);
+  const [uploading, setUploading] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [memberDocCount, setMemberDocCountLocal] = useState(initialMemberDocCount);
+  const [adjustingCount, setAdjustingCount] = useState(false);
 
   const submitted = employerDocsSubmittedAt !== null || status !== 'INITIATED';
   const waitingForHelper = submitted && status === 'INITIATED';
+  const canAdjust = status === 'INITIATED' && !submitted;
 
+  const allSlots = [
+    ...BASE_DOC_SLOTS,
+    ...Array.from({ length: memberDocCount }, (_, i) => memberSlot(i + 1)),
+  ];
   const uploaded = new Map(docs.map((d) => [d.docType, d]));
-  const allUploaded = DOC_SLOTS.every(({ type }) => uploaded.has(type));
+  const allUploaded = allSlots.every(({ type }) => uploaded.has(type));
 
-  async function handleFile(type: PlacementDocType, file: File) {
+  async function handleFile(type: string, file: File) {
     if (file.size > 10 * 1024 * 1024) { setError('File must be under 10 MB.'); return; }
     setUploading(type);
     setError(null);
     try {
-      const doc = await uploadPlacementDocument(placementId, type, file);
+      const doc = await uploadPlacementDocument(placementId, type as PlacementDocType, file);
       onDocUploaded(doc);
     } catch {
       setError('Upload failed. Please try again.');
     } finally {
       setUploading(null);
+    }
+  }
+
+  async function handleCountChange(delta: number) {
+    const next = Math.min(10, Math.max(1, memberDocCount + delta));
+    if (next === memberDocCount) return;
+    setAdjustingCount(true);
+    try {
+      await setMemberDocCount(placementId, next);
+      setMemberDocCountLocal(next);
+      onMemberCountChange(next);
+    } finally {
+      setAdjustingCount(false);
     }
   }
 
@@ -735,58 +924,72 @@ function JwcDocumentSection({
       {/* Document uploads */}
       <div className="rounded-2xl border border-cream-200 bg-white overflow-hidden">
         <div className="px-4 py-3 border-b border-cream-100">
-          <p className="text-sm font-medium text-ink-900">Step 2 — Upload required documents</p>
-          <p className="text-xs text-ink-500 mt-0.5">PDF or image, max 10 MB each.</p>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium text-ink-900">Step 2 — Upload required documents</p>
+              <p className="text-xs text-ink-500 mt-0.5">PDF or image, max 10 MB each.</p>
+            </div>
+          </div>
         </div>
         {error && (
           <div className="px-4 py-2 text-xs text-clay-600 bg-blush-50 border-b border-blush-100">{error}</div>
         )}
         <div className="divide-y divide-cream-100">
-          {DOC_SLOTS.map(({ type, label, hint }) => {
-            const existing = uploaded.get(type);
-            const busy = uploading === type;
-            return (
-              <div key={type} className="flex items-center gap-3 px-4 py-3">
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-ink-900">{label}</div>
-                  <div className="text-xs text-ink-400 mt-0.5">
-                    {existing ? (
-                      existing.viewUrl
-                        ? <a href={existing.viewUrl} target="_blank" rel="noopener noreferrer"
-                            className="text-sage-700 hover:text-sage-900 font-medium">
-                            {existing.originalName}
-                          </a>
-                        : <span className="text-ink-600">{existing.originalName}</span>
-                    ) : hint}
-                  </div>
-                </div>
-                <div className="shrink-0 flex items-center gap-2">
-                  {existing && (
-                    <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-sage-100 text-sage-700">
-                      Uploaded
-                    </span>
-                  )}
-                  <label className={`cursor-pointer text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
-                    busy ? 'opacity-40 pointer-events-none' : ''
-                  } ${existing
-                    ? 'border-cream-300 text-ink-500 hover:border-sage-400 hover:text-sage-700'
-                    : 'bg-sage-700 text-white border-sage-700 hover:bg-sage-800'
-                  }`}>
-                    {busy ? 'Uploading…' : existing ? 'Replace' : 'Upload'}
-                    <input
-                      type="file"
-                      accept=".pdf,image/*"
-                      className="sr-only"
-                      disabled={busy}
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) void handleFile(type, f);
-                        e.target.value = '';
-                      }}
-                    />
-                  </label>
-                </div>
+          {/* Base slots — main applicant NRIC + NOA */}
+          {BASE_DOC_SLOTS.map(({ type, label, hint }) => (
+            <DocSlotRow
+              key={type}
+              type={type}
+              label={label}
+              hint={hint}
+              existing={uploaded.get(type) ?? null}
+              busy={uploading === type}
+              onFile={(f) => void handleFile(type, f)}
+            />
+          ))}
+
+          {/* Household member IC/passport slots */}
+          <div className="px-4 py-2.5 bg-cream-50 border-b border-cream-100 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-ink-800">Household members IC / Passport</p>
+              <p className="text-[11px] text-ink-500 mt-0.5">
+                {memberDocCount} member{memberDocCount !== 1 ? 's' : ''} — include all people living in the household
+              </p>
+            </div>
+            {canAdjust && (
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => void handleCountChange(-1)}
+                  disabled={memberDocCount <= 1 || adjustingCount}
+                  className="w-7 h-7 rounded-full border border-cream-300 text-ink-600 text-sm font-bold flex items-center justify-center hover:border-sage-400 disabled:opacity-30 transition-colors"
+                >
+                  −
+                </button>
+                <span className="w-6 text-center text-sm font-semibold text-ink-800 tabular-nums">
+                  {memberDocCount}
+                </span>
+                <button
+                  onClick={() => void handleCountChange(1)}
+                  disabled={memberDocCount >= 10 || adjustingCount}
+                  className="w-7 h-7 rounded-full border border-cream-300 text-ink-600 text-sm font-bold flex items-center justify-center hover:border-sage-400 disabled:opacity-30 transition-colors"
+                >
+                  +
+                </button>
               </div>
+            )}
+          </div>
+          {Array.from({ length: memberDocCount }, (_, i) => {
+            const slot = memberSlot(i + 1);
+            return (
+              <DocSlotRow
+                key={slot.type}
+                type={slot.type}
+                label={slot.label}
+                hint={slot.hint}
+                existing={uploaded.get(slot.type) ?? null}
+                busy={uploading === slot.type}
+                onFile={(f) => void handleFile(slot.type, f)}
+              />
             );
           })}
         </div>
@@ -794,7 +997,9 @@ function JwcDocumentSection({
         {/* Submit button */}
         <div className="px-4 py-3 border-t border-cream-100 bg-cream-50">
           {!allUploaded && (
-            <p className="text-xs text-ink-400 mb-2">Upload all three documents to submit.</p>
+            <p className="text-xs text-ink-400 mb-2">
+              Upload all documents ({allSlots.length - Object.keys(Object.fromEntries(uploaded)).length} remaining) to submit.
+            </p>
           )}
           <button
             onClick={() => void handleSubmit()}
@@ -957,12 +1162,19 @@ function HelperPassportSection({
 
 // ── Partner docs panel (metadata only, no download) ───────────────────────────
 
-const DOC_TYPE_LABELS: Record<PlacementDocType, string> = {
+const DOC_TYPE_LABELS: Record<string, string> = {
   NRIC_FRONT: 'NRIC — Front',
   NRIC_BACK:  'NRIC — Back',
   NOA:        'Notice of Assessment',
   PASSPORT:   'Passport',
 };
+
+function docTypeLabel(type: string): string {
+  if (DOC_TYPE_LABELS[type]) return DOC_TYPE_LABELS[type];
+  const m = type.match(/^MEMBER_IC_(\d+)$/);
+  if (m) return `Household Member ${m[1]} — IC / Passport`;
+  return type;
+}
 
 function fmtBytes(n: number) {
   return n >= 1024 * 1024
@@ -995,7 +1207,7 @@ function PartnerDocsPanel({
           {docs.map((d) => (
             <div key={d.id} className="flex items-center gap-3 px-4 py-3">
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-ink-800">{DOC_TYPE_LABELS[d.docType] ?? d.docType}</div>
+                <div className="text-sm font-medium text-ink-800">{docTypeLabel(d.docType)}</div>
                 <div className="text-xs text-ink-400 mt-0.5">
                   {d.originalName} &middot; {fmtBytes(d.sizeBytes)} &middot;{' '}
                   {new Date(d.uploadedAt).toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' })}

@@ -20,5 +20,7 @@ public record AdminPlacementView(
         Instant helperDocsSubmittedAt,
         Instant createdAt,
         Instant updatedAt,
-        List<SelectedServiceView> selectedServices
+        List<SelectedServiceView> selectedServices,
+        java.time.LocalDate idealStartDate,
+        int memberDocCount
 ) {}

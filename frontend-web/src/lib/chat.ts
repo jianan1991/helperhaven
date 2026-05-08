@@ -9,6 +9,8 @@ export interface ConversationView {
   counterpartyPhotoUrl: string | null;
   /** Employer-only: helper's email, revealed as soon as the employer opens the chat. */
   counterpartyContact: string | null;
+  /** Helper's preferred off-day policy from their profile; null when counterparty is an employer. */
+  counterpartyOffDayPolicy: string | null;
   lastMessageAt: string | null;       // ISO-8601
   lastMessagePreview: string | null;
   unreadCount: number;

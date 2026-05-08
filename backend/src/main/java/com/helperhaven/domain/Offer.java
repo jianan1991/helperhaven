@@ -41,7 +41,7 @@ public class Offer {
     private String offDayPolicy;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "offer_status")
+    @Column(nullable = false)
     private OfferStatus status;
 
     @Column(name = "parent_offer_id")

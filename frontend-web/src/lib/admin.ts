@@ -61,6 +61,8 @@ export interface AdminPlacement {
   createdAt: string;
   updatedAt: string;
   selectedServices: AdminSelectedService[];
+  idealStartDate: string | null;
+  memberDocCount: number;
 }
 
 export interface AdminHelper {
@@ -137,6 +139,9 @@ export const sendAdminMessage = (conversationId: string, body: string) =>
 
 export const updateAdminPlacementStatus = (placementId: string, status: string) =>
   api.put<AdminPlacement>(`/admin/placements/${placementId}/status`, { status }).then((r) => r.data);
+
+export const updateAdminIdealStartDate = (placementId: string, idealStartDate: string | null) =>
+  api.put<AdminPlacement>(`/admin/placements/${placementId}/ideal-start-date`, { idealStartDate }).then((r) => r.data);
 
 export interface AdminPlacementDocument {
   id: string;

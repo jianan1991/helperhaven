@@ -30,8 +30,8 @@ import java.util.UUID;
 @RequestMapping("/api/placements/{placementId}/documents")
 public class PlacementDocumentController {
 
-    private static final Set<String> EMPLOYER_TYPES = Set.of("NRIC_FRONT", "NRIC_BACK", "NOA");
-    private static final Set<String> HELPER_TYPES  = Set.of("PASSPORT");
+    private static final Set<String> EMPLOYER_BASE_TYPES = Set.of("NRIC_FRONT", "NRIC_BACK", "NOA");
+    private static final Set<String> HELPER_TYPES        = Set.of("PASSPORT");
     private static final Duration VIEW_TTL = Duration.ofHours(1);
     private static final long MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 
@@ -83,23 +83,22 @@ public class PlacementDocumentController {
         Placement p = placements.findById(placementId)
                 .orElseThrow(() -> new NoSuchElementException("Placement not found"));
 
-        // Determine which doc types this caller may upload
-        Set<String> callerAllowed;
-        if (callerId.equals(p.getEmployerId())) {
-            if (!"JWC".equals(p.getEngagementMode())) {
-                res.sendError(400, "Documents are only required for JWC placements");
-                return null;
-            }
-            callerAllowed = EMPLOYER_TYPES;
-        } else if (callerId.equals(p.getHelperId())) {
-            callerAllowed = HELPER_TYPES;
-        } else {
+        boolean isEmployer = callerId.equals(p.getEmployerId());
+        boolean isHelper   = callerId.equals(p.getHelperId());
+        if (!isEmployer && !isHelper) {
             res.sendError(403, "Only a party to this placement may upload documents");
+            return null;
+        }
+        if (isEmployer && !"JWC".equals(p.getEngagementMode())) {
+            res.sendError(400, "Documents are only required for JWC placements");
             return null;
         }
 
         String type = docType.toUpperCase();
-        if (!callerAllowed.contains(type)) {
+        boolean allowed = isHelper
+                ? HELPER_TYPES.contains(type)
+                : EMPLOYER_BASE_TYPES.contains(type) || isMemberIcType(type);
+        if (!allowed) {
             res.sendError(400, "Document type " + docType + " is not allowed for your role");
             return null;
         }
@@ -166,7 +165,8 @@ public class PlacementDocumentController {
         Set<String> uploaded = docs.findByPlacementId(placementId).stream()
                 .map(PlacementDocument::getDocType)
                 .collect(java.util.stream.Collectors.toSet());
-        if (!uploaded.containsAll(EMPLOYER_TYPES)) {
+        Set<String> required = requiredEmployerTypes(p.getMemberDocCount());
+        if (!uploaded.containsAll(required)) {
             res.sendError(400, "All required documents must be uploaded before submitting");
             return null;
         }
@@ -263,5 +263,25 @@ public class PlacementDocumentController {
     private static String sanitise(String name) {
         if (name == null) return "file";
         return name.replaceAll("[^a-zA-Z0-9._\\-]", "_");
+    }
+
+    /** Returns true for MEMBER_IC_1 … MEMBER_IC_10 */
+    private static boolean isMemberIcType(String type) {
+        if (!type.startsWith("MEMBER_IC_")) return false;
+        try {
+            int n = Integer.parseInt(type.substring("MEMBER_IC_".length()));
+            return n >= 1 && n <= 10;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    /** Full set of required employer doc types given the configured member count */
+    private static Set<String> requiredEmployerTypes(int memberDocCount) {
+        Set<String> set = new java.util.HashSet<>(EMPLOYER_BASE_TYPES);
+        for (int i = 1; i <= memberDocCount; i++) {
+            set.add("MEMBER_IC_" + i);
+        }
+        return set;
     }
 }

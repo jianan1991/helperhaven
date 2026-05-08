@@ -104,9 +104,11 @@ public class PlacementService {
             if (!"INITIATED".equals(p.getStatus())) {
                 return toView(p);
             }
-            // Update mode if changed
-            if (!engagementMode.equals(p.getEngagementMode())) {
-                p.setEngagementMode(engagementMode);
+            // Update mode and ideal start date if changed
+            boolean changed = !engagementMode.equals(p.getEngagementMode());
+            if (changed) p.setEngagementMode(engagementMode);
+            if (req.idealStartDate() != null) p.setIdealStartDate(req.idealStartDate());
+            if (changed || req.idealStartDate() != null) {
                 p.setUpdatedAt(Instant.now());
                 placements.save(p);
             }
@@ -132,6 +134,10 @@ public class PlacementService {
         }
         UUID helperId = userId.equals(conv.getUserAId()) ? conv.getUserBId() : conv.getUserAId();
 
+        int memberCount = employers.findById(userId)
+                .map(e -> e.getHouseholdSize() != null ? e.getHouseholdSize().intValue() : 1)
+                .orElse(1);
+
         Instant now = Instant.now();
         Placement p = Placement.builder()
                 .id(UUID.randomUUID())
@@ -140,6 +146,9 @@ public class PlacementService {
                 .helperId(helperId)
                 .engagementMode(engagementMode)
                 .status("INITIATED")
+                .restDaysPerWeek(1)
+                .idealStartDate(req.idealStartDate())
+                .memberDocCount(Math.max(1, memberCount))
                 .initiatedAt(now)
                 .createdAt(now)
                 .updatedAt(now)
@@ -157,6 +166,35 @@ public class PlacementService {
             });
         }
 
+        return toView(p);
+    }
+
+    @Transactional
+    public PlacementView setMemberDocCount(UUID userId, UUID placementId, int count) {
+        if (count < 1 || count > 10) {
+            throw new PlacementException(PlacementError.INVALID_STATE, "Member count must be between 1 and 10");
+        }
+        Placement p = placements.findById(placementId)
+                .orElseThrow(() -> new PlacementException(PlacementError.NOT_FOUND, "Placement not found"));
+        if (!p.getEmployerId().equals(userId)) {
+            throw new PlacementException(PlacementError.FORBIDDEN, "Only the employer can adjust the member count");
+        }
+        p.setMemberDocCount(count);
+        p.setUpdatedAt(java.time.Instant.now());
+        placements.save(p);
+        return toView(p);
+    }
+
+    @Transactional
+    public PlacementView setIdealStartDate(UUID userId, UUID placementId, java.time.LocalDate date) {
+        Placement p = placements.findById(placementId)
+                .orElseThrow(() -> new PlacementException(PlacementError.NOT_FOUND, "Placement not found"));
+        if (!p.getEmployerId().equals(userId)) {
+            throw new PlacementException(PlacementError.FORBIDDEN, "Only the employer can set the ideal start date");
+        }
+        p.setIdealStartDate(date);
+        p.setUpdatedAt(java.time.Instant.now());
+        placements.save(p);
         return toView(p);
     }
 
@@ -195,7 +233,9 @@ public class PlacementService {
                 p.getEmployerDocsSubmittedAt(),
                 p.getHelperDocsSubmittedAt(),
                 p.getCreatedAt(), p.getUpdatedAt(),
-                selected
+                selected,
+                p.getIdealStartDate(),
+                p.getMemberDocCount()
         );
     }
 

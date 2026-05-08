@@ -102,6 +102,16 @@ public class AdminController {
         return admin.setPlacementStatus(placementId, req.status());
     }
 
+    @PutMapping("/placements/{placementId}/ideal-start-date")
+    public AdminPlacementView setIdealStartDate(
+            @PathVariable UUID placementId,
+            @RequestBody IdealStartDateRequest req,
+            HttpServletResponse res
+    ) throws IOException {
+        if (!isAdmin()) { res.sendError(403); return null; }
+        return admin.setIdealStartDate(placementId, req.idealStartDate());
+    }
+
     @GetMapping("/helpers")
     public List<AdminHelperView> helpers(HttpServletResponse res) throws IOException {
         if (!isAdmin()) { res.sendError(403); return null; }
@@ -159,4 +169,5 @@ public class AdminController {
     public record StatusRequest(String status) {}
     public record MessageRequest(String body) {}
     public record TerminationResolveRequest(String adminNotes, boolean resolved) {}
+    public record IdealStartDateRequest(java.time.LocalDate idealStartDate) {}
 }

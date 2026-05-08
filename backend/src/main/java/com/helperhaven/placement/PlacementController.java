@@ -10,12 +10,14 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -44,6 +46,26 @@ public class PlacementController {
     ) {
         return service.create(JwtAuthFilter.currentUserId(), offerId, req);
     }
+
+    @PutMapping("/{placementId}/member-count")
+    public PlacementView setMemberDocCount(
+            @PathVariable UUID placementId,
+            @RequestBody MemberCountRequest req
+    ) {
+        return service.setMemberDocCount(JwtAuthFilter.currentUserId(), placementId, req.memberDocCount());
+    }
+
+    public record MemberCountRequest(int memberDocCount) {}
+
+    @PutMapping("/{placementId}/ideal-start-date")
+    public PlacementView setIdealStartDate(
+            @PathVariable UUID placementId,
+            @RequestBody IdealStartDateRequest req
+    ) {
+        return service.setIdealStartDate(JwtAuthFilter.currentUserId(), placementId, req.idealStartDate());
+    }
+
+    public record IdealStartDateRequest(LocalDate idealStartDate) {}
 
     @RestControllerAdvice(assignableTypes = PlacementController.class)
     static class Handler {

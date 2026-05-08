@@ -65,6 +65,13 @@ public class Placement {
     @Column(name = "rest_day_of_week")
     private Integer restDayOfWeek;
 
+    /** Second rest day when restDaysPerWeek = 2; null otherwise */
+    @Column(name = "rest_day_of_week_2")
+    private Integer restDayOfWeek2;
+
+    @Column(name = "rest_days_per_week", nullable = false)
+    private int restDaysPerWeek;
+
     @Column(name = "initiated_at")
     private Instant initiatedAt;
 
@@ -82,4 +89,12 @@ public class Placement {
 
     @Column(name = "activated_at")
     private Instant activatedAt;
+
+    /** Family's ideal employment start date — set at placement creation, adjustable by admin */
+    @Column(name = "ideal_start_date")
+    private LocalDate idealStartDate;
+
+    /** Number of household member IC/passport slots required; defaults to employer's householdSize */
+    @Column(name = "member_doc_count", nullable = false)
+    private int memberDocCount;
 }

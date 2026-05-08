@@ -99,19 +99,27 @@ public class EmploymentController {
         return toView(p);
     }
 
-    @PutMapping("/rest-day")
+    @PutMapping("/rest-schedule")
     @Transactional
-    public EmploymentView setRestDay(
+    public EmploymentView setRestSchedule(
             @PathVariable UUID placementId,
-            @RequestBody RestDayRequest req,
+            @RequestBody RestScheduleRequest req,
             HttpServletResponse res
     ) throws IOException {
         UUID callerId = JwtAuthFilter.currentUserId();
         Placement p = requireParty(callerId, placementId, res);
         if (p == null) return null;
-        if (!callerId.equals(p.getEmployerId())) { res.sendError(403, "Only employer may set rest day"); return null; }
+        if (!callerId.equals(p.getEmployerId())) { res.sendError(403, "Only employer may set rest schedule"); return null; }
+        if (req.restDaysPerWeek() < 1 || req.restDaysPerWeek() > 2) { res.sendError(400, "restDaysPerWeek must be 1 or 2"); return null; }
         if (req.restDayOfWeek() < 0 || req.restDayOfWeek() > 6) { res.sendError(400, "restDayOfWeek must be 0–6"); return null; }
+        if (req.restDaysPerWeek() == 2) {
+            if (req.restDayOfWeek2() == null) { res.sendError(400, "restDayOfWeek2 required when restDaysPerWeek is 2"); return null; }
+            if (req.restDayOfWeek2() < 0 || req.restDayOfWeek2() > 6) { res.sendError(400, "restDayOfWeek2 must be 0–6"); return null; }
+            if (req.restDayOfWeek2().equals(req.restDayOfWeek())) { res.sendError(400, "Rest days must be different"); return null; }
+        }
+        p.setRestDaysPerWeek(req.restDaysPerWeek());
         p.setRestDayOfWeek(req.restDayOfWeek());
+        p.setRestDayOfWeek2(req.restDaysPerWeek() == 2 ? req.restDayOfWeek2() : null);
         p.setUpdatedAt(Instant.now());
         placements.save(p);
         return toView(p);
@@ -250,6 +258,7 @@ public class EmploymentController {
                 .sortOrder(req.sortOrder() != null ? req.sortOrder() : nextOrder)
                 .recurrenceType(recType)
                 .daysOfWeek("WEEKLY".equals(recType) ? req.daysOfWeek() : null)
+                .includeOnRestDay(Boolean.TRUE.equals(req.includeOnRestDay()))
                 .createdAt(Instant.now())
                 .build();
         todoTemplates.save(tmpl);
@@ -293,8 +302,11 @@ public class EmploymentController {
             // Auto-materialize recurring templates that apply to this day
             List<TodoTemplate> templates = todoTemplates.findByPlacementIdOrderBySortOrderAscCreatedAtAsc(placementId);
             Instant now = Instant.now();
+            boolean isDayOff = (p.getRestDayOfWeek() != null && p.getRestDayOfWeek() == dowIndex)
+                    || (p.getRestDaysPerWeek() >= 2 && p.getRestDayOfWeek2() != null && p.getRestDayOfWeek2() == dowIndex);
             for (TodoTemplate tmpl : templates) {
                 if (!appliesToDay(tmpl, dowIndex)) continue;
+                if (isDayOff && !tmpl.isIncludeOnRestDay()) continue;
                 if (!todos.existsByPlacementIdAndTemplateIdAndDueDate(placementId, tmpl.getId(), d)) {
                     todos.save(Todo.builder()
                             .id(UUID.randomUUID())
@@ -461,7 +473,8 @@ public class EmploymentController {
         String employerName = ep != null && ep.getFullName() != null ? ep.getFullName() : "Family";
         return new EmploymentView(
                 p.getId(), p.getStatus(), p.getEngagementMode(),
-                p.getEmploymentStartDate(), p.getEmploymentEndDate(), p.getRestDayOfWeek(),
+                p.getEmploymentStartDate(), p.getEmploymentEndDate(),
+                p.getRestDayOfWeek(), p.getRestDayOfWeek2(), p.getRestDaysPerWeek(),
                 helperName, employerName,
                 p.getEmployerId(), p.getHelperId()
         );
@@ -482,7 +495,7 @@ public class EmploymentController {
     }
 
     private TodoTemplateView toTemplateView(TodoTemplate t) {
-        return new TodoTemplateView(t.getId(), t.getDescription(), t.getSortOrder(), t.getRecurrenceType(), t.getDaysOfWeek());
+        return new TodoTemplateView(t.getId(), t.getDescription(), t.getSortOrder(), t.getRecurrenceType(), t.getDaysOfWeek(), t.isIncludeOnRestDay());
     }
 
     private static boolean appliesToDay(TodoTemplate tmpl, int dowIndex) {
@@ -511,7 +524,8 @@ public class EmploymentController {
 
     public record EmploymentView(
             UUID placementId, String status, String engagementMode,
-            LocalDate employmentStartDate, LocalDate employmentEndDate, Integer restDayOfWeek,
+            LocalDate employmentStartDate, LocalDate employmentEndDate,
+            Integer restDayOfWeek, Integer restDayOfWeek2, int restDaysPerWeek,
             String helperDisplayName, String employerDisplayName,
             UUID employerId, UUID helperId
     ) {}
@@ -524,7 +538,7 @@ public class EmploymentController {
 
     public record TodoView(UUID id, String description, LocalDate dueDate, boolean completed, boolean recurring, String recurrenceType, Instant createdAt) {}
 
-    public record TodoTemplateView(UUID id, String description, int sortOrder, String recurrenceType, Integer daysOfWeek) {}
+    public record TodoTemplateView(UUID id, String description, int sortOrder, String recurrenceType, Integer daysOfWeek, boolean includeOnRestDay) {}
 
     public record HolidayView(UUID id, LocalDate date, String name) {}
 
@@ -535,10 +549,10 @@ public class EmploymentController {
 
     public record StartDateRequest(LocalDate startDate) {}
     public record EndDateRequest(LocalDate endDate) {}
-    public record RestDayRequest(int restDayOfWeek) {}
+    public record RestScheduleRequest(int restDaysPerWeek, int restDayOfWeek, Integer restDayOfWeek2) {}
     public record LeaveRequestBody(String type, LocalDate startDate, LocalDate endDate, String note) {}
     public record RespondLeaveRequest(boolean approved) {}
     public record TodoBody(String description, LocalDate dueDate) {}
-    public record TodoTemplateBody(String description, Integer sortOrder, String recurrenceType, Integer daysOfWeek) {}
+    public record TodoTemplateBody(String description, Integer sortOrder, String recurrenceType, Integer daysOfWeek, Boolean includeOnRestDay) {}
     public record TerminateBody(String reason) {}
 }

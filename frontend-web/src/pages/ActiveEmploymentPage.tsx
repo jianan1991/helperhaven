@@ -5,7 +5,7 @@ import { listPlacements, type PlacementView } from '../lib/placements';
 import {
   fetchEmployment, fetchLeaveRequests, fetchTodos, fetchHolidays,
   fetchTodoTemplates, createTodoTemplate, deleteTodoTemplate,
-  setStartDate, setEndDate, setRestDay,
+  setStartDate, setEndDate, setRestSchedule,
   createLeaveRequest, respondLeaveRequest,
   createTodo, toggleTodoComplete, deleteTodo, requestTermination,
   type EmploymentView, type LeaveRequestView, type TodoView,
@@ -52,8 +52,10 @@ export default function ActiveEmploymentPage() {
   const [startDateInput, setStartDateInput] = useState('');
   const [editEndDate, setEditEndDate] = useState(false);
   const [endDateInput, setEndDateInput] = useState('');
-  const [editRestDay, setEditRestDay] = useState(false);
-  const [restDayInput, setRestDayInput] = useState<number>(6); // Sunday default
+  const [editRestSchedule, setEditRestSchedule] = useState(false);
+  const [restDaysPerWeekInput, setRestDaysPerWeekInput] = useState(1);
+  const [restDayInput, setRestDayInput] = useState<number>(6);
+  const [restDay2Input, setRestDay2Input] = useState<number>(5); // Saturday default
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +76,9 @@ export default function ActiveEmploymentPage() {
       setEmployment(e);
       setStartDateInput(e.employmentStartDate ?? todayStr);
       setEndDateInput(e.employmentEndDate ?? '');
+      setRestDaysPerWeekInput(e.restDaysPerWeek ?? 1);
       setRestDayInput(e.restDayOfWeek ?? 6);
+      setRestDay2Input(e.restDayOfWeek2 ?? 5);
     }).catch(() => {});
     // Load leave eagerly so calendar rest-day + leave both work from the start
     fetchLeaveRequests(placement.id).then(setLeaveRequests).catch(() => {});
@@ -133,14 +137,19 @@ export default function ActiveEmploymentPage() {
     setSaving(false);
   }
 
-  async function handleSaveRestDay() {
+  async function handleSaveRestSchedule() {
     setSaving(true);
     setError(null);
     try {
-      const e = await setRestDay(placementId, restDayInput);
+      const e = await setRestSchedule(
+        placementId,
+        restDaysPerWeekInput,
+        restDayInput,
+        restDaysPerWeekInput === 2 ? restDay2Input : null,
+      );
       setEmployment(e);
-      setEditRestDay(false);
-    } catch { setError('Failed to save rest day'); }
+      setEditRestSchedule(false);
+    } catch { setError('Failed to save rest schedule'); }
     setSaving(false);
   }
 
@@ -248,9 +257,11 @@ export default function ActiveEmploymentPage() {
           editEndDate={editEndDate} setEditEndDate={setEditEndDate}
           endDateInput={endDateInput} setEndDateInput={setEndDateInput}
           handleSaveEndDate={handleSaveEndDate}
-          editRestDay={editRestDay} setEditRestDay={setEditRestDay}
+          editRestSchedule={editRestSchedule} setEditRestSchedule={setEditRestSchedule}
+          restDaysPerWeekInput={restDaysPerWeekInput} setRestDaysPerWeekInput={setRestDaysPerWeekInput}
           restDayInput={restDayInput} setRestDayInput={setRestDayInput}
-          handleSaveRestDay={handleSaveRestDay}
+          restDay2Input={restDay2Input} setRestDay2Input={setRestDay2Input}
+          handleSaveRestSchedule={handleSaveRestSchedule}
           saving={saving}
           onTerminate={() => setTerminateOpen(true)}
         />
@@ -330,7 +341,11 @@ function OverviewTab({
   employment, isEmployer,
   editStartDate, setEditStartDate, startDateInput, setStartDateInput, handleSaveStartDate,
   editEndDate, setEditEndDate, endDateInput, setEndDateInput, handleSaveEndDate,
-  editRestDay, setEditRestDay, restDayInput, setRestDayInput, handleSaveRestDay,
+  editRestSchedule, setEditRestSchedule,
+  restDaysPerWeekInput, setRestDaysPerWeekInput,
+  restDayInput, setRestDayInput,
+  restDay2Input, setRestDay2Input,
+  handleSaveRestSchedule,
   saving, onTerminate,
 }: {
   employment: EmploymentView; isEmployer: boolean;
@@ -340,9 +355,11 @@ function OverviewTab({
   editEndDate: boolean; setEditEndDate: (v: boolean) => void;
   endDateInput: string; setEndDateInput: (v: string) => void;
   handleSaveEndDate: () => Promise<void>;
-  editRestDay: boolean; setEditRestDay: (v: boolean) => void;
+  editRestSchedule: boolean; setEditRestSchedule: (v: boolean) => void;
+  restDaysPerWeekInput: number; setRestDaysPerWeekInput: (v: number) => void;
   restDayInput: number; setRestDayInput: (v: number) => void;
-  handleSaveRestDay: () => Promise<void>;
+  restDay2Input: number; setRestDay2Input: (v: number) => void;
+  handleSaveRestSchedule: () => Promise<void>;
   saving: boolean; onTerminate: () => void;
 }) {
   return (
@@ -430,44 +447,105 @@ function OverviewTab({
         )}
       </div>
 
-      {/* Rest day */}
+      {/* Rest schedule */}
       <div className="rounded-2xl bg-white border border-cream-200 p-5">
-        <h2 className="text-sm font-semibold text-ink-700 mb-3 uppercase tracking-wide">Weekly Rest Day</h2>
-        {isEmployer && editRestDay ? (
-          <div className="flex items-center gap-3">
-            <select
-              className="border border-cream-300 rounded-lg px-3 py-1.5 text-sm text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-400"
-              value={restDayInput}
-              onChange={(e) => setRestDayInput(parseInt(e.target.value))}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold text-ink-700 uppercase tracking-wide">Weekly Rest Schedule</h2>
+          {isEmployer && !editRestSchedule && (
+            <button
+              onClick={() => {
+                setRestDaysPerWeekInput(employment.restDaysPerWeek ?? 1);
+                setRestDayInput(employment.restDayOfWeek ?? 6);
+                setRestDay2Input(employment.restDayOfWeek2 ?? 5);
+                setEditRestSchedule(true);
+              }}
+              className="text-[10px] text-sage-600 hover:text-sage-800 underline"
             >
-              {DAY_LABELS.map((d, i) => (
-                <option key={i} value={i}>{d}</option>
-              ))}
-            </select>
-            <button disabled={saving} onClick={() => void handleSaveRestDay()}
-              className="text-xs text-white bg-sage-600 hover:bg-sage-700 px-3 py-1 rounded-lg disabled:opacity-50">
-              Save
+              edit
             </button>
-            <button onClick={() => setEditRestDay(false)} className="text-xs text-ink-400 hover:text-ink-600">Cancel</button>
+          )}
+        </div>
+
+        {isEmployer && editRestSchedule ? (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-ink-600 mb-1.5">Rest days per week</label>
+              <div className="flex gap-2">
+                {[1, 2].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setRestDaysPerWeekInput(n)}
+                    className={`px-4 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                      restDaysPerWeekInput === n
+                        ? 'bg-sage-600 text-white border-sage-600'
+                        : 'bg-white text-ink-600 border-cream-300 hover:border-sage-400'
+                    }`}
+                  >
+                    {n} day{n > 1 ? 's' : ''}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className={`grid gap-4 ${restDaysPerWeekInput === 2 ? 'grid-cols-2' : 'grid-cols-1 max-w-xs'}`}>
+              <div>
+                <label className="block text-xs font-medium text-ink-600 mb-1.5">
+                  {restDaysPerWeekInput === 2 ? 'First rest day' : 'Rest day'}
+                </label>
+                <select
+                  className="w-full border border-cream-300 rounded-lg px-3 py-1.5 text-sm text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-400"
+                  value={restDayInput}
+                  onChange={(e) => setRestDayInput(parseInt(e.target.value))}
+                >
+                  {DAY_LABELS.map((d, i) => (
+                    <option key={i} value={i} disabled={restDaysPerWeekInput === 2 && i === restDay2Input}>{d}</option>
+                  ))}
+                </select>
+              </div>
+              {restDaysPerWeekInput === 2 && (
+                <div>
+                  <label className="block text-xs font-medium text-ink-600 mb-1.5">Second rest day</label>
+                  <select
+                    className="w-full border border-cream-300 rounded-lg px-3 py-1.5 text-sm text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-400"
+                    value={restDay2Input}
+                    onChange={(e) => setRestDay2Input(parseInt(e.target.value))}
+                  >
+                    {DAY_LABELS.map((d, i) => (
+                      <option key={i} value={i} disabled={i === restDayInput}>{d}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button
+                disabled={saving}
+                onClick={() => void handleSaveRestSchedule()}
+                className="text-xs text-white bg-sage-600 hover:bg-sage-700 px-3 py-1 rounded-lg disabled:opacity-50"
+              >
+                Save
+              </button>
+              <button onClick={() => setEditRestSchedule(false)} className="text-xs text-ink-400 hover:text-ink-600">Cancel</button>
+            </div>
           </div>
         ) : (
-          <div className="flex items-center gap-3">
-            <div className="flex gap-1.5">
-              {DAY_LABELS.map((d, i) => (
-                <div key={i} className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-medium transition-colors ${
-                  employment.restDayOfWeek === i
-                    ? 'bg-sage-600 text-white'
-                    : 'bg-cream-100 text-ink-400'
-                }`}>{d}</div>
-              ))}
+          <div>
+            <div className="flex gap-1.5 mb-2">
+              {DAY_LABELS.map((d, i) => {
+                const isRest = employment.restDayOfWeek === i || employment.restDayOfWeek2 === i;
+                return (
+                  <div key={i} className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-medium transition-colors ${
+                    isRest ? 'bg-sage-600 text-white' : 'bg-cream-100 text-ink-400'
+                  }`}>{d}</div>
+                );
+              })}
             </div>
-            {isEmployer && (
-              <button onClick={() => setEditRestDay(true)} className="text-[10px] text-sage-600 hover:text-sage-800 underline ml-1">edit</button>
-            )}
+            <p className="text-xs text-ink-500">
+              {employment.restDayOfWeek == null
+                ? 'No rest day set — this will also affect the calendar view.'
+                : `${employment.restDaysPerWeek ?? 1} day${(employment.restDaysPerWeek ?? 1) > 1 ? 's' : ''} per week`}
+            </p>
           </div>
-        )}
-        {employment.restDayOfWeek == null && !editRestDay && isEmployer && (
-          <p className="text-xs text-ink-400 mt-2">No rest day set — this will also affect the calendar view.</p>
         )}
       </div>
 
@@ -527,7 +605,8 @@ function CalendarTab({
   function isRestDay(day: number) {
     if (employment?.restDayOfWeek == null) return false;
     const dow = (new Date(year, month, day).getDay() + 6) % 7;
-    return dow === employment.restDayOfWeek;
+    return dow === employment.restDayOfWeek ||
+      (employment.restDaysPerWeek >= 2 && employment.restDayOfWeek2 != null && dow === employment.restDayOfWeek2);
   }
 
   function isToday(day: number) {
@@ -881,9 +960,9 @@ function RoutineManager({
 }) {
   const [activeSection, setActiveSection] = useState<RecurrenceType | null>(null);
 
-  async function handleAdd(desc: string, type: RecurrenceType, daysOfWeek?: number) {
+  async function handleAdd(desc: string, type: RecurrenceType, daysOfWeek?: number, includeOnRestDay?: boolean) {
     try {
-      const t = await createTodoTemplate(placementId, desc, type, daysOfWeek);
+      const t = await createTodoTemplate(placementId, desc, type, daysOfWeek, includeOnRestDay);
       setTemplates((prev) => [...prev, t]);
       // Reload today's todos — new template may apply today
       fetchTodos(placementId, todayStr).then(setTodos).catch(() => {});
@@ -932,11 +1011,12 @@ function RoutineSection({
   templates: TodoTemplateView[];
   active: boolean;
   onToggleActive: () => void;
-  onAdd: (desc: string, type: RecurrenceType, daysOfWeek?: number) => Promise<void>;
+  onAdd: (desc: string, type: RecurrenceType, daysOfWeek?: number, includeOnRestDay?: boolean) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }) {
   const [desc, setDesc] = useState('');
   const [days, setDays] = useState(0);
+  const [includeOnRestDay, setIncludeOnRestDay] = useState(false);
   const [saving, setSaving] = useState(false);
   const badge = REC_BADGE[type];
 
@@ -953,9 +1033,10 @@ function RoutineSection({
     if (!desc.trim()) return;
     if (type === 'WEEKLY' && days === 0) return;
     setSaving(true);
-    await onAdd(desc.trim(), type, type === 'WEEKLY' ? days : undefined);
+    await onAdd(desc.trim(), type, type === 'WEEKLY' ? days : undefined, includeOnRestDay);
     setDesc('');
     setDays(0);
+    setIncludeOnRestDay(false);
     setSaving(false);
   }
 
@@ -987,6 +1068,9 @@ function RoutineSection({
               <span className="flex-1 text-sm text-ink-700">{tmpl.description}</span>
               {type === 'WEEKLY' && (
                 <span className="text-[10px] text-ink-400 shrink-0">{daysLabel(tmpl)}</span>
+              )}
+              {tmpl.includeOnRestDay && (
+                <span className="text-[9px] bg-sage-100 text-sage-700 px-1.5 py-0.5 rounded-full font-medium shrink-0">+ rest day</span>
               )}
               <button onClick={() => void onDelete(tmpl.id)}
                 className="text-ink-200 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
@@ -1036,6 +1120,15 @@ function RoutineSection({
               {saving ? '…' : 'Add'}
             </button>
           </div>
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={includeOnRestDay}
+              onChange={(e) => setIncludeOnRestDay(e.target.checked)}
+              className="w-3.5 h-3.5 rounded accent-sage-600"
+            />
+            <span className="text-xs text-ink-500">Include on rest days</span>
+          </label>
         </div>
       )}
     </div>

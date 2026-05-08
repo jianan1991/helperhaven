@@ -5,6 +5,7 @@ export type EngagementMode = 'JWC' | 'DIY';
 export type PlacementStatus =
   | 'INITIATED'
   | 'DOCS_COLLECTION'
+  | 'MOM_ACKNOWLEDGE'
   | 'MOM_SUBMITTED'
   | 'IPA_ISSUED'
   | 'HELPER_ARRIVAL'
@@ -17,6 +18,11 @@ export interface SelectedService {
   title: string;
   priceSgd: number;
   workflowStage: string | null;
+}
+
+export async function setMemberDocCount(placementId: string, memberDocCount: number): Promise<PlacementView> {
+  const { data } = await api.put<PlacementView>(`/placements/${placementId}/member-count`, { memberDocCount });
+  return data;
 }
 
 export interface PlacementView {
@@ -34,15 +40,18 @@ export interface PlacementView {
   createdAt: string;
   updatedAt: string;
   selectedServices: SelectedService[];
+  idealStartDate: string | null;
+  memberDocCount: number;
 }
 
 export const PLACEMENT_STEPS: { key: PlacementStatus; label: string }[] = [
-  { key: 'INITIATED',       label: 'New' },
-  { key: 'DOCS_COLLECTION', label: 'Documents' },
-  { key: 'MOM_SUBMITTED',   label: 'MOM Application' },
-  { key: 'IPA_ISSUED',      label: 'IPA Issued' },
-  { key: 'HELPER_ARRIVAL',  label: 'Arrival' },
-  { key: 'ACTIVE',          label: 'Active' },
+  { key: 'INITIATED',        label: 'New' },
+  { key: 'DOCS_COLLECTION',  label: 'Documents' },
+  { key: 'MOM_ACKNOWLEDGE',  label: 'MOM Acknowledge' },
+  { key: 'MOM_SUBMITTED',    label: 'MOM Application' },
+  { key: 'IPA_ISSUED',       label: 'IPA Issued' },
+  { key: 'HELPER_ARRIVAL',   label: 'Arrival' },
+  { key: 'ACTIVE',           label: 'Active' },
 ];
 
 export async function listPlacements(): Promise<PlacementView[]> {
@@ -50,7 +59,7 @@ export async function listPlacements(): Promise<PlacementView[]> {
   return data;
 }
 
-export type PlacementDocType = 'NRIC_FRONT' | 'NRIC_BACK' | 'NOA' | 'PASSPORT';
+export type PlacementDocType = 'NRIC_FRONT' | 'NRIC_BACK' | 'NOA' | 'PASSPORT' | string;
 
 export interface PlacementDocumentView {
   id: string;
@@ -101,15 +110,21 @@ export async function uploadPlacementDocument(
   return data;
 }
 
+export async function setIdealStartDate(placementId: string, idealStartDate: string): Promise<PlacementView> {
+  const { data } = await api.put<PlacementView>(`/placements/${placementId}/ideal-start-date`, { idealStartDate });
+  return data;
+}
+
 export async function createPlacement(
   offerId: string,
   mode: EngagementMode,
   selectedServiceIds: string[],
+  idealStartDate?: string | null,
 ): Promise<PlacementView> {
   // Send mode as query param (old backend) AND in body (new backend) for compatibility.
   const { data } = await api.post<PlacementView>(
     `/placements/from-offer/${offerId}?mode=${mode}`,
-    { mode, selectedServiceIds },
+    { mode, selectedServiceIds, idealStartDate: idealStartDate ?? null },
   );
   return data;
 }

@@ -6,7 +6,9 @@ export interface EmploymentView {
   engagementMode: string;
   employmentStartDate: string | null;
   employmentEndDate: string | null;
-  restDayOfWeek: number | null; // 0=Mon … 6=Sun
+  restDayOfWeek: number | null;  // 0=Mon … 6=Sun
+  restDayOfWeek2: number | null; // second rest day when restDaysPerWeek = 2
+  restDaysPerWeek: number;
   helperDisplayName: string;
   employerDisplayName: string;
   employerId: string;
@@ -44,6 +46,7 @@ export interface TodoTemplateView {
   sortOrder: number;
   recurrenceType: RecurrenceType;
   daysOfWeek: number | null; // bitmask: bit 0=Mon … bit 6=Sun (WEEKLY only)
+  includeOnRestDay: boolean;
 }
 
 export interface HolidayView {
@@ -73,8 +76,17 @@ export const setStartDate = (placementId: string, startDate: string) =>
 export const setEndDate = (placementId: string, endDate: string) =>
   api.put<EmploymentView>(`/employment/${placementId}/end-date`, { endDate }).then((r) => r.data);
 
-export const setRestDay = (placementId: string, restDayOfWeek: number) =>
-  api.put<EmploymentView>(`/employment/${placementId}/rest-day`, { restDayOfWeek }).then((r) => r.data);
+export const setRestSchedule = (
+  placementId: string,
+  restDaysPerWeek: number,
+  restDayOfWeek: number,
+  restDayOfWeek2?: number | null,
+) =>
+  api.put<EmploymentView>(`/employment/${placementId}/rest-schedule`, {
+    restDaysPerWeek,
+    restDayOfWeek,
+    restDayOfWeek2: restDayOfWeek2 ?? null,
+  }).then((r) => r.data);
 
 // ── Leave requests ───────────────────────────────────────────────────────────
 
@@ -113,8 +125,9 @@ export const createTodoTemplate = (
   description: string,
   recurrenceType: string = 'DAILY',
   daysOfWeek?: number,
+  includeOnRestDay = false,
 ) => api.post<TodoTemplateView>(`/employment/${placementId}/todo-templates`, {
-  description, recurrenceType, daysOfWeek,
+  description, recurrenceType, daysOfWeek, includeOnRestDay,
 }).then((r) => r.data);
 
 export const deleteTodoTemplate = (placementId: string, templateId: string) =>

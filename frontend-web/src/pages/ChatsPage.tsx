@@ -589,12 +589,10 @@ export default function ChatsPage() {
                       className="w-full px-3 py-2 rounded-xl border border-cream-200 bg-white text-sm focus:outline-none focus:border-sage-500"
                     >
                       <option value="">Select…</option>
-                      <option>One full Sunday per week</option>
-                      <option>Two Sundays per month</option>
-                      <option>One Sunday per month</option>
-                      <option>Alternate Sundays</option>
-                      <option>Any weekday (negotiable)</option>
-                      <option>No fixed day off</option>
+                      {OFF_DAY_OPTIONS.map((o) => <option key={o}>{o}</option>)}
+                      {offerOffDay && !OFF_DAY_OPTIONS.includes(offerOffDay) && (
+                        <option value={offerOffDay}>{offerOffDay}</option>
+                      )}
                     </select>
                   </div>
                 </div>
@@ -614,7 +612,10 @@ export default function ChatsPage() {
               {me?.role === 'EMPLOYER' && !offerOpen && (
                 <button
                   type="button"
-                  onClick={() => setOfferOpen(true)}
+                  onClick={() => {
+                    setOfferOffDay(activeConv.counterpartyOffDayPolicy ?? 'One full Sunday per week');
+                    setOfferOpen(true);
+                  }}
                   className="shrink-0 text-xs px-3 py-2 rounded-full bg-cream-50 border border-cream-200 hover:border-sage-500 text-ink-700 transition-colors"
                 >
                   📋 Offer role

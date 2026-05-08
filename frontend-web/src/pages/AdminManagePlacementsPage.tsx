@@ -3,9 +3,11 @@ import {
   fetchAdminPlacements,
   fetchPlacementDocuments,
   updateAdminPlacementStatus,
+  updateAdminIdealStartDate,
   type AdminPlacement,
   type AdminPlacementDocument,
 } from '../lib/admin';
+import { asMessage } from '../lib/api';
 import {
   fetchAdminTerminations, resolveTermination,
   type AdminTerminationView,
@@ -21,6 +23,7 @@ const PLACEMENT_STATUS_LABELS: Record<string, string> = Object.fromEntries(
 const PLACEMENT_STATUS_DESC: Record<string, string> = {
   INITIATED: 'Hiring just created — awaiting employer JotForm & document uploads',
   DOCS_COLLECTION: 'Admin is reviewing employer documents and preparing MOM application',
+  MOM_ACKNOWLEDGE: 'MOM notified JWC as EA — family must acknowledge JWC representation via MOM email before application proceeds',
   MOM_SUBMITTED: 'MOM application submitted — awaiting IPA letter',
   IPA_ISSUED: 'IPA received — employer purchasing bond & insurance, arranging arrival',
   HELPER_ARRIVAL: 'Helper has arrived — completing SIP, medical, biometrics',
@@ -31,6 +34,7 @@ const STATUS_COLORS: Record<string, string> = {
   ACTIVE: 'bg-sage-100 text-sage-700',
   INITIATED: 'bg-butter-100 text-ink-700',
   DOCS_COLLECTION: 'bg-butter-100 text-ink-700',
+  MOM_ACKNOWLEDGE: 'bg-butter-100 text-ink-700',
   MOM_SUBMITTED: 'bg-sage-50 text-sage-700',
   IPA_ISSUED: 'bg-sage-50 text-sage-700',
   HELPER_ARRIVAL: 'bg-blush-100 text-clay-600',
@@ -49,6 +53,11 @@ const DIY_CHECKLIST: Record<string, { label: string; note?: string }[]> = {
     { label: 'MOM FDW application form completed' },
     { label: 'Security bond form signed' },
     { label: 'Medical insurance policy document' },
+  ],
+  MOM_ACKNOWLEDGE: [
+    { label: 'MOM has sent acknowledgement email to family', note: 'JWC placements only' },
+    { label: 'Family clicks the acknowledgement link in the MOM email', note: 'Authorises JWC Employment Service to represent them' },
+    { label: 'Confirm family acknowledgement received before advancing to MOM_SUBMITTED' },
   ],
   MOM_SUBMITTED: [
     { label: 'IPA (In-Principle Approval) letter received from MOM', note: 'Awaiting MOM processing' },
@@ -325,6 +334,9 @@ function PlacementRow({
   const [saving, setSaving] = useState(false);
   const [stageError, setStageError] = useState<string | null>(null);
   const [docs, setDocs] = useState<AdminPlacementDocument[] | null>(null);
+  const [editingStartDate, setEditingStartDate] = useState(false);
+  const [startDateInput, setStartDateInput] = useState(placement.idealStartDate ?? '');
+  const [startDateSaving, setStartDateSaving] = useState(false);
 
   async function changeStatus(newStatus: string) {
     if (saving || newStatus === placement.status) return;
@@ -334,10 +346,22 @@ function PlacementRow({
       const updated = await updateAdminPlacementStatus(placement.id, newStatus);
       onUpdate(updated);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to update stage.';
-      setStageError(msg);
+      setStageError(asMessage(err, 'Failed to update stage.'));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function saveStartDate() {
+    setStartDateSaving(true);
+    try {
+      const updated = await updateAdminIdealStartDate(placement.id, startDateInput || null);
+      onUpdate(updated);
+      setEditingStartDate(false);
+    } catch {
+      // leave edit mode open so admin can retry
+    } finally {
+      setStartDateSaving(false);
     }
   }
 
@@ -552,6 +576,57 @@ function PlacementRow({
             </div>
           </div>
 
+          {/* Ideal start date — JWC placements */}
+          {isJwc && (
+            <div className="rounded-2xl border border-cream-200 bg-white px-4 py-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-ink-800">Ideal start date</p>
+                  {!editingStartDate && (
+                    <p className="text-sm text-ink-700 mt-0.5">
+                      {placement.idealStartDate
+                        ? new Date(placement.idealStartDate).toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' })
+                        : <span className="text-ink-400 italic">Not set</span>}
+                    </p>
+                  )}
+                </div>
+                {!editingStartDate && (
+                  <button
+                    onClick={() => { setStartDateInput(placement.idealStartDate ?? ''); setEditingStartDate(true); }}
+                    className="text-xs px-3 py-1.5 rounded-full border border-cream-300 text-ink-600 hover:border-sage-400 hover:text-sage-700 transition-colors"
+                  >
+                    {placement.idealStartDate ? 'Adjust' : 'Set'}
+                  </button>
+                )}
+              </div>
+              {editingStartDate && (
+                <div className="space-y-2">
+                  <input
+                    type="date"
+                    value={startDateInput}
+                    onChange={(e) => setStartDateInput(e.target.value)}
+                    className="w-full border border-cream-300 rounded-xl px-3 py-2 text-sm text-ink-900 focus:outline-none focus:ring-2 focus:ring-sage-400 bg-white"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setEditingStartDate(false)}
+                      className="flex-1 py-2 rounded-xl border border-cream-300 text-sm text-ink-600 hover:bg-cream-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => void saveStartDate()}
+                      disabled={startDateSaving || startDateInput === placement.idealStartDate}
+                      className="flex-1 py-2 rounded-xl bg-sage-800 text-white text-sm font-medium hover:bg-sage-700 disabled:opacity-40 transition-colors"
+                    >
+                      {startDateSaving ? 'Saving…' : 'Save'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Document review panel — JWC DOCS_COLLECTION only */}
           {isJwc && placement.status === 'DOCS_COLLECTION' && (
             <div className="rounded-2xl border-2 border-butter-200 bg-butter-50 overflow-hidden">
@@ -568,12 +643,19 @@ function PlacementRow({
                 <div className="px-4 py-4 text-xs text-ink-400">Loading documents…</div>
               ) : (
                 <div className="bg-white divide-y divide-cream-100">
-                  {(['NRIC_FRONT', 'NRIC_BACK', 'NOA'] as const).map((type) => {
+                  {[
+                    ...(['NRIC_FRONT', 'NRIC_BACK', 'NOA'] as const),
+                    ...Array.from({ length: placement.memberDocCount ?? 1 }, (_, i) => `MEMBER_IC_${i + 1}` as string),
+                  ].map((type) => {
                     const doc = docs.find((d) => d.docType === type);
+                    const label = DOC_LABELS[type] ?? (() => {
+                      const m = type.match(/^MEMBER_IC_(\d+)$/);
+                      return m ? `Household Member ${m[1]} — IC / Passport` : type;
+                    })();
                     return (
                       <div key={type} className="flex items-center justify-between px-4 py-3 text-sm">
                         <div>
-                          <div className="font-medium text-ink-800">{DOC_LABELS[type]}</div>
+                          <div className="font-medium text-ink-800">{label}</div>
                           {doc ? (
                             <div className="text-xs text-ink-400 mt-0.5">
                               {doc.originalName} · {(doc.sizeBytes / 1024).toFixed(0)} KB · {relTime(doc.uploadedAt)}

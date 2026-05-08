@@ -38,6 +38,9 @@ public class TodoTemplate {
     @Column(name = "days_of_week")
     private Integer daysOfWeek;
 
+    @Column(name = "include_on_rest_day", nullable = false)
+    private boolean includeOnRestDay;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 }

@@ -53,7 +53,9 @@ api.interceptors.response.use(
       });
       const token = await refreshing;
       if (token) {
-        original.headers?.set?.('Authorization', `Bearer ${token}`);
+        // Delete the stale header — the request interceptor will re-attach
+        // the fresh token from the store on the retry.
+        original.headers?.delete?.('Authorization');
         return api.request(original);
       }
     }

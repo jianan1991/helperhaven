@@ -19,7 +19,7 @@ public class AdminService {
     private static final int PREVIEW_LEN = 100;
 
     private static final List<String> PLACEMENT_STATUS_ORDER = List.of(
-            "INITIATED", "DOCS_COLLECTION", "MOM_SUBMITTED", "IPA_ISSUED", "HELPER_ARRIVAL", "ACTIVE"
+            "INITIATED", "DOCS_COLLECTION", "MOM_ACKNOWLEDGE", "MOM_SUBMITTED", "IPA_ISSUED", "HELPER_ARRIVAL", "ACTIVE"
     );
 
     private final UserRepository users;
@@ -245,7 +245,9 @@ public class AdminService {
                             p.getHelperDocsSubmittedAt(),
                             p.getCreatedAt(),
                             p.getUpdatedAt(),
-                            svcs
+                            svcs,
+                            p.getIdealStartDate(),
+                            p.getMemberDocCount()
                     );
                 })
                 .toList();
@@ -259,13 +261,12 @@ public class AdminService {
         Placement p = placements.findById(placementId)
                 .orElseThrow(() -> new NoSuchElementException("Placement not found: " + placementId));
 
-        // Enforce sequential transitions — skipping steps is not allowed
+        // Admins can revert to any earlier stage, but cannot skip stages forward
         int currentIdx = PLACEMENT_STATUS_ORDER.indexOf(p.getStatus());
         int newIdx = PLACEMENT_STATUS_ORDER.indexOf(newStatus);
-        if (newIdx != currentIdx + 1) {
+        if (newIdx > currentIdx + 1) {
             throw new IllegalArgumentException(
-                    "Invalid transition from " + p.getStatus() + " to " + newStatus
-                    + ". Steps must advance one at a time.");
+                    "Cannot skip placement stages forward. Advance one step at a time.");
         }
 
         Instant now = Instant.now();
@@ -325,7 +326,53 @@ public class AdminService {
                 p.getHelperDocsSubmittedAt(),
                 p.getCreatedAt(),
                 p.getUpdatedAt(),
-                svcs
+                svcs,
+                p.getIdealStartDate(),
+                p.getMemberDocCount()
+        );
+    }
+
+    @Transactional
+    public AdminPlacementView setIdealStartDate(UUID placementId, LocalDate date) {
+        Placement p = placements.findById(placementId)
+                .orElseThrow(() -> new NoSuchElementException("Placement not found: " + placementId));
+        p.setIdealStartDate(date);
+        p.setUpdatedAt(Instant.now());
+        placements.save(p);
+
+        Map<UUID, User> userMap = buildUserMap();
+        Map<UUID, String> displayNames = buildDisplayNames();
+        Map<UUID, ServiceItem> serviceMap = new HashMap<>();
+        serviceItems.findAll().forEach(s -> serviceMap.put(s.getId(), s));
+        User employer = userMap.get(p.getEmployerId());
+        User helper = userMap.get(p.getHelperId());
+        List<SelectedServiceView> svcs = placementServiceItems
+                .findByIdPlacementId(p.getId()).stream()
+                .map(psi -> {
+                    ServiceItem svc = serviceMap.get(psi.getId().getServiceId());
+                    return svc != null
+                            ? new SelectedServiceView(svc.getId(), svc.getIcon(), svc.getTitle(), psi.getPriceSgd(), svc.getWorkflowStage())
+                            : null;
+                })
+                .filter(Objects::nonNull)
+                .toList();
+        return new AdminPlacementView(
+                p.getId(),
+                p.getEmployerId(),
+                employer != null ? employer.getEmail() : "?",
+                displayNames.getOrDefault(p.getEmployerId(), employer != null ? employer.getEmail() : "?"),
+                p.getHelperId(),
+                helper != null ? helper.getEmail() : "?",
+                displayNames.getOrDefault(p.getHelperId(), helper != null ? helper.getEmail() : "?"),
+                p.getEngagementMode(),
+                p.getStatus(),
+                p.getEmployerDocsSubmittedAt(),
+                p.getHelperDocsSubmittedAt(),
+                p.getCreatedAt(),
+                p.getUpdatedAt(),
+                svcs,
+                p.getIdealStartDate(),
+                p.getMemberDocCount()
         );
     }
 
